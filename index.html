@@ -1,0 +1,879 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>新疆伊犁 10 天自驾环线地图</title>
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="preconnect" href="https://tile.openstreetmap.org">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17212b;
+      --muted: #5c6875;
+      --line: #d9e1e8;
+      --paper: #f7fafc;
+      --panel: #ffffff;
+      --must: #d83b3b;
+      --good: #2576d2;
+      --pass: #198f66;
+      --stay: #7a4bd8;
+      --ride: #b45f06;
+      --route: #1b6fd8;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--paper);
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: minmax(320px, 410px) 1fr;
+      min-height: 100vh;
+    }
+
+    aside {
+      height: 100vh;
+      overflow: auto;
+      padding: 18px;
+      background: var(--panel);
+      border-right: 1px solid var(--line);
+    }
+
+    #map {
+      height: 100vh;
+      min-height: 620px;
+      background:
+        linear-gradient(135deg, rgba(218, 235, 228, .9), rgba(235, 241, 225, .9)),
+        repeating-linear-gradient(45deg, rgba(27, 111, 216, .06) 0 1px, transparent 1px 18px);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 23px;
+      line-height: 1.18;
+      letter-spacing: 0;
+    }
+
+    .summary {
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0 0 16px;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      color: var(--ink);
+      padding: 9px 11px;
+      font-size: 13px;
+      line-height: 1;
+      cursor: pointer;
+      min-height: 36px;
+    }
+
+    button:hover,
+    button.is-active {
+      border-color: var(--route);
+      color: var(--route);
+      background: #edf5ff;
+    }
+
+    .legend {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 12px;
+      padding: 12px;
+      margin-bottom: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfdff;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      flex: 0 0 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .day-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .day-head {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px;
+      align-items: start;
+      padding: 12px;
+      cursor: pointer;
+      min-height: 64px;
+    }
+
+    .day-num {
+      width: 38px;
+      height: 38px;
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      background: #edf5ff;
+      color: var(--route);
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .day-title {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.35;
+    }
+
+    .day-meta {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .spots {
+      margin: 0;
+      padding: 0 12px 12px 60px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .spots li {
+      margin: 5px 0;
+    }
+
+    .segments {
+      margin: 0;
+      padding: 0 12px 12px 60px;
+      color: #314252;
+      font-size: 12px;
+      line-height: 1.45;
+      list-style: none;
+    }
+
+    .segments li {
+      position: relative;
+      margin: 5px 0;
+    }
+
+    .segments li::before {
+      content: "";
+      position: absolute;
+      left: -13px;
+      top: .72em;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--route);
+    }
+
+    .note {
+      margin: 16px 0 0;
+      padding: 12px;
+      border-radius: 8px;
+      background: #fff8e8;
+      border: 1px solid #f1dcad;
+      color: #735623;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .marker-pin {
+      width: 30px;
+      height: 30px;
+      margin-left: -15px;
+      margin-top: -15px;
+      border: 2px solid #fff;
+      border-radius: 50% 50% 50% 8px;
+      transform: rotate(-45deg);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .25);
+    }
+
+    .marker-pin span {
+      position: absolute;
+      inset: 4px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 800;
+      font-size: 11px;
+      transform: rotate(45deg);
+    }
+
+    .popup h3 {
+      margin: 0 0 6px;
+      font-size: 16px;
+    }
+
+    .popup p {
+      margin: 6px 0;
+      color: #344250;
+      line-height: 1.45;
+    }
+
+    .leaflet-touch .leaflet-control-layers,
+    .leaflet-touch .leaflet-bar {
+      border-width: 1px;
+    }
+
+    .leaflet-touch .leaflet-bar a {
+      width: 38px;
+      height: 38px;
+      line-height: 38px;
+    }
+
+    .tag {
+      display: inline-block;
+      margin-right: 5px;
+      padding: 3px 6px;
+      border-radius: 999px;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .segment-label {
+      min-width: 86px;
+      padding: 4px 7px;
+      border: 1px solid rgba(27, 111, 216, .35);
+      border-radius: 7px;
+      background: rgba(255, 255, 255, .94);
+      color: #183858;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .14);
+      font-size: 11px;
+      line-height: 1.25;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .segment-label strong {
+      display: block;
+      color: var(--route);
+      font-size: 11px;
+    }
+
+    @media (max-width: 900px) {
+      .app {
+        display: flex;
+        flex-direction: column;
+      }
+
+      aside {
+        order: 2;
+        height: auto;
+        max-height: 42vh;
+        padding: 12px;
+        border-right: 0;
+        border-top: 1px solid var(--line);
+        border-bottom: 0;
+      }
+
+      #map {
+        order: 1;
+        height: 58vh;
+        min-height: 360px;
+      }
+
+      h1 {
+        font-size: 18px;
+        margin-bottom: 5px;
+      }
+
+      .summary {
+        font-size: 12px;
+        margin-bottom: 10px;
+      }
+
+      .toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        margin: 0 -12px 10px;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, .96);
+        border-bottom: 1px solid var(--line);
+      }
+
+      button {
+        flex: 0 0 auto;
+        min-height: 40px;
+        padding: 10px 12px;
+        font-size: 13px;
+      }
+
+      .legend {
+        grid-template-columns: repeat(4, max-content);
+        gap: 8px;
+        overflow-x: auto;
+        padding: 9px 10px;
+        margin-bottom: 10px;
+        font-size: 11px;
+      }
+
+      .day-card {
+        margin-bottom: 8px;
+      }
+
+      .day-head {
+        min-height: 58px;
+        padding: 10px;
+      }
+
+      .day-num {
+        width: 34px;
+        height: 34px;
+      }
+
+      .day-title {
+        font-size: 14px;
+      }
+
+      .spots {
+        padding: 0 10px 10px 54px;
+        font-size: 12px;
+      }
+
+      .segments {
+        padding: 0 10px 10px 54px;
+        font-size: 12px;
+      }
+
+      .day-card:not(.is-open) .segments,
+      .day-card:not(.is-open) .spots {
+        display: none;
+      }
+
+      .note {
+        margin-top: 10px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      #map {
+        height: 61vh;
+      }
+
+      aside {
+        max-height: 39vh;
+      }
+
+      .leaflet-control-layers {
+        font-size: 13px;
+      }
+
+      .leaflet-popup-content {
+        width: min(250px, 72vw) !important;
+        margin: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <aside>
+      <h1>新疆伊犁 10 天自驾环线</h1>
+      <p class="summary">乌鲁木齐进出，串联赛里木湖、伊昭公路、夏塔、喀拉峻、琼库什台、那拉提、唐布拉和独库北段。点击每天或地图点位查看细节。</p>
+
+      <div class="toolbar">
+        <button id="fitAll" class="is-active" type="button">全线</button>
+        <button id="mustOnly" type="button">只看必去</button>
+        <button id="rideOnly" type="button">骑马点</button>
+        <button id="toggleSegments" type="button">隐藏路段标签</button>
+        <button id="resetFilter" type="button">显示全部</button>
+      </div>
+
+      <div class="legend">
+        <span><i class="dot" style="background: var(--must)"></i>必去</span>
+        <span><i class="dot" style="background: var(--good)"></i>推荐</span>
+        <span><i class="dot" style="background: var(--pass)"></i>顺路</span>
+        <span><i class="dot" style="background: var(--stay)"></i>住宿/中转</span>
+        <span><i class="dot" style="background: var(--ride)"></i>骑马推荐</span>
+      </div>
+
+      <section id="days"></section>
+
+      <p class="note">地图连线为规划示意线，不代表真实道路轨迹；路段时间是自驾估算，山区、景区换乘、拍照停车会让耗时浮动。景区入口、停车场和临时交通管制请以高德/百度导航及景区当天公告为准。伊昭公路和独库公路受天气影响明显，出发前一天务必复核路况。</p>
+    </aside>
+
+    <div id="map" aria-label="新疆伊犁 10 天自驾环线地图"></div>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const pointColors = {
+      must: getComputedStyle(document.documentElement).getPropertyValue('--must').trim(),
+      good: getComputedStyle(document.documentElement).getPropertyValue('--good').trim(),
+      pass: getComputedStyle(document.documentElement).getPropertyValue('--pass').trim(),
+      stay: getComputedStyle(document.documentElement).getPropertyValue('--stay').trim()
+      ,
+      ride: getComputedStyle(document.documentElement).getPropertyValue('--ride').trim()
+    };
+
+    const points = [
+      { id: 'urumqi', name: '乌鲁木齐', type: 'stay', day: 1, lat: 43.8256, lng: 87.6168, feature: '进出疆和取还车城市，补给最方便。', tip: '落地后建议先采购水、零食、防晒和车载应急用品。' },
+      { id: 's101', name: 'S101 国防公路观景段', type: 'pass', day: 1, lat: 43.93, lng: 86.05, feature: '丹霞、峡谷、荒原和天山前山风光混合，一路景观变化快。', tip: '适合慢开随停，雨后个别路段谨慎。' },
+      { id: 'anjihai', name: '安集海大峡谷', type: 'good', day: 1, lat: 44.181, lng: 85.646, feature: '彩色峡谷切割感强，俯瞰视角很震撼。', tip: '风大且崖边危险，不建议靠近无护栏边缘。' },
+      { id: 'dushanzi', name: '独山子', type: 'stay', day: 1, lat: 44.328, lng: 84.886, feature: '独库北段起点，住宿和补给成熟。', tip: '第二天去赛里木湖前加满油。' },
+
+      { id: 'sayram', name: '赛里木湖', type: 'must', day: 2, lat: 44.583, lng: 81.174, feature: '高山冷水湖、雪山、草甸和蓝色湖面，是伊犁环线最稳定的高光。', tip: '建议下午入园看侧光，住附近第二天补日出。' },
+      { id: 'guozigou', name: '果子沟大桥', type: 'pass', day: 3, lat: 44.455, lng: 81.151, feature: '赛湖进入伊犁河谷的峡谷通道，桥梁和山谷层次明显。', tip: '停车点有限，注意安全停靠。' },
+      { id: 'huocheng', name: '霍城薰衣草田', type: 'good', day: 3, lat: 43.941, lng: 80.875, feature: '6 月季节感很强，紫色花田配远山。', tip: '花期和地块开放会变，建议当天查园区状态。' },
+      { id: 'yining', name: '伊宁', type: 'stay', day: 3, lat: 43.916, lng: 81.324, feature: '伊犁州首府，适合补给、吃饭、逛六星街和喀赞其。', tip: '这晚可以安排轻松一点，给后面山路蓄力。' },
+
+      { id: 'yizhao', name: '伊昭公路', type: 'must', day: 4, lat: 43.489, lng: 81.146, feature: '雪山、草甸、山谷、林海和连续弯道，被称作“小独库”。', tip: '只白天行驶，遇雨雾放慢，别赶夜路。' },
+      { id: 'zhaosu', name: '昭苏', type: 'stay', day: 4, lat: 43.157, lng: 81.131, feature: '天马之乡，草原开阔，是去夏塔前的理想中转。', tip: '时间充裕可看天马浴河或湿地日落。' },
+      { id: 'xiata', name: '夏塔景区', type: 'must', day: 5, lat: 42.847, lng: 80.782, feature: '古道、冰川、森林、草原和牛奶河组合，雪山压迫感强。', tip: '推荐轻徒步到将军桥或卡拉房子方向，量力而行。' },
+      { id: 'xiataRide', name: '夏塔雪山马道', type: 'ride', day: 5, lat: 42.79, lng: 80.735, feature: '雪山、森林和古道氛围强，适合把骑马和冰川远眺结合。', tip: '更像景区马道骑行，不是自由野骑；赶早进，下午天气常变。' },
+      { id: 'tekes', name: '特克斯八卦城', type: 'stay', day: 5, lat: 43.218, lng: 81.835, feature: '喀拉峻和琼库什台的枢纽，县城住宿选择多。', tip: '晚上可以无人机或观景台看八卦城格局。' },
+
+      { id: 'kalajun', name: '喀拉峻草原', type: 'must', day: 6, lat: 43.048, lng: 82.111, feature: '五花草甸、起伏坡线、雪岭云杉和远处雪山，草原层次很漂亮。', tip: '想拍大草原曲线，优先安排上午或傍晚光线。' },
+      { id: 'kalajunRide', name: '喀拉峻草原骑马备选', type: 'ride', day: 6, lat: 43.075, lng: 82.13, feature: '开阔草甸和起伏坡线漂亮，适合草原骑马拍照。', tip: '景区经营路线居多，想野一点还是把主场放琼库什台。' },
+      { id: 'koksu', name: '阔克苏大峡谷', type: 'good', day: 6, lat: 43.15, lng: 82.04, feature: '峡谷、水湾和鳄鱼湾视角，和喀拉峻草原形成反差。', tip: '景区很大，草原和峡谷都玩会比较累。' },
+      { id: 'qiongkushitai', name: '琼库什台', type: 'must', day: 7, lat: 43.008, lng: 82.326, feature: '木屋村落、草原坡线、乌孙古道氛围，比成熟景区更松弛。', tip: '强烈建议住一晚，清晨和傍晚最好看。' },
+      { id: 'qiongkushitaiRide', name: '琼库什台野骑首选区', type: 'ride', day: 7, lat: 43.038, lng: 82.265, feature: '最推荐的野骑区域，草原山坡、溪谷、木屋村落和乌孙古道氛围都在。', tip: '建议通过民宿找固定马队，先选2-3小时草原山坡线；新手不要跑马。' },
+
+      { id: 'gongliu', name: '巩留/新源中转', type: 'pass', day: 8, lat: 43.484, lng: 82.231, feature: '从琼库什台去那拉提的中途补给点。', tip: '这天车程偏长，午饭和加油在县城解决。' },
+      { id: 'nalati', name: '那拉提', type: 'must', day: 9, lat: 43.323, lng: 84.033, feature: '空中草原、河谷草原、盘龙谷道和哈萨克民俗，是伊犁经典名片。', tip: '时间有限优先空中草原，想轻松就河谷草原。' },
+      { id: 'nalatiRide', name: '那拉提骑马轻体验', type: 'ride', day: 9, lat: 43.345, lng: 84.016, feature: '成熟景区内骑马体验，安全和配套更稳定，但野性弱一些。', tip: '适合新手或只想体验拍照的人，不作为野骑主场。' },
+      { id: 'tangbula', name: '唐布拉百里画廊', type: 'good', day: 9, lat: 43.827, lng: 83.628, feature: '河谷、草甸、森林和雪山一路铺开，商业化程度低一些。', tip: '适合边开边停，不必追固定打卡点。' },
+      { id: 'qorma', name: '乔尔玛', type: 'stay', day: 9, lat: 43.881, lng: 84.179, feature: '独库中北段关键节点，靠近乔尔玛烈士陵园。', tip: '住宿有限，旺季提前订；也可住尼勒克。' },
+
+      { id: 'hashilegen', name: '哈希勒根达坂', type: 'good', day: 10, lat: 44.197, lng: 84.572, feature: '独库北段高山达坂，常见雪墙、盘山路和强烈海拔景观。', tip: '弯多坡陡，遇雾或雨雪务必降低速度。' },
+      { id: 'dushanzi2', name: '独山子返程节点', type: 'pass', day: 10, lat: 44.328, lng: 84.886, feature: '结束独库北段后回到高速网络。', tip: '如果体力不足，可以在独山子多住一晚再回乌鲁木齐。' }
+    ];
+
+    const days = [
+      {
+        day: 1,
+        title: '乌鲁木齐 → S101 → 安集海 → 独山子',
+        distance: '约 430-500 km，7-9 小时，住独山子',
+        ids: ['urumqi', 's101', 'anjihai', 'dushanzi'],
+        segments: [
+          { from: 'urumqi', to: 's101', label: '约160 km / 3h', note: '含 S101 山路观景' },
+          { from: 's101', to: 'anjihai', label: '约150 km / 2.5h', note: '边走边停' },
+          { from: 'anjihai', to: 'dushanzi', label: '约80 km / 1.5h', note: '傍晚到独山子' }
+        ]
+      },
+      {
+        day: 2,
+        title: '独山子 → 赛里木湖',
+        distance: '约 420 km，5-6 小时，住赛湖/果子沟',
+        ids: ['dushanzi', 'sayram'],
+        segments: [
+          { from: 'dushanzi', to: 'sayram', label: '约420 km / 5-6h', note: '高速为主，下午入湖' }
+        ]
+      },
+      {
+        day: 3,
+        title: '赛里木湖 → 果子沟 → 霍城 → 伊宁',
+        distance: '约 180-230 km，4-6 小时，住伊宁',
+        ids: ['sayram', 'guozigou', 'huocheng', 'yining'],
+        segments: [
+          { from: 'sayram', to: 'guozigou', label: '约45 km / 1h', note: '含出湖和拍桥' },
+          { from: 'guozigou', to: 'huocheng', label: '约70 km / 1.5h', note: '薰衣草季可停' },
+          { from: 'huocheng', to: 'yining', label: '约65 km / 1h', note: '晚上逛伊宁' }
+        ]
+      },
+      {
+        day: 4,
+        title: '伊宁 → 伊昭公路 → 昭苏',
+        distance: '约 180 km，4-5 小时，住昭苏',
+        ids: ['yining', 'yizhao', 'zhaosu'],
+        segments: [
+          { from: 'yining', to: 'yizhao', label: '约80 km / 2h', note: '进入伊昭公路' },
+          { from: 'yizhao', to: 'zhaosu', label: '约100 km / 2-3h', note: '弯道多，限白天' }
+        ]
+      },
+      {
+        day: 5,
+        title: '昭苏 → 夏塔 → 特克斯',
+        distance: '约 240 km，5-7 小时，住特克斯；可体验雪山马道',
+        ids: ['zhaosu', 'xiata', 'xiataRide', 'tekes'],
+        segments: [
+          { from: 'zhaosu', to: 'xiata', label: '约75 km / 1.5h', note: '早到夏塔' },
+          { from: 'xiata', to: 'xiataRide', label: '景区内 / 2-4h', note: '徒步或骑马' },
+          { from: 'xiata', to: 'tekes', label: '约160 km / 3h', note: '返回特克斯' }
+        ]
+      },
+      {
+        day: 6,
+        title: '特克斯 → 喀拉峻/阔克苏 → 特克斯',
+        distance: '景区日，约 80-140 km，住特克斯；草原骑马备选',
+        ids: ['tekes', 'kalajun', 'kalajunRide', 'koksu', 'tekes'],
+        segments: [
+          { from: 'tekes', to: 'kalajun', label: '约35 km / 1h', note: '去喀拉峻' },
+          { from: 'kalajun', to: 'kalajunRide', label: '景区内 / 1-2h', note: '草原骑马' },
+          { from: 'kalajun', to: 'koksu', label: '景区换乘 / 1h+', note: '阔克苏峡谷' },
+          { from: 'koksu', to: 'tekes', label: '约45 km / 1h', note: '回县城' }
+        ]
+      },
+      {
+        day: 7,
+        title: '特克斯 → 琼库什台',
+        distance: '约 90-120 km，3-4 小时，住琼库什台；下午安排野骑',
+        ids: ['tekes', 'qiongkushitai', 'qiongkushitaiRide'],
+        segments: [
+          { from: 'tekes', to: 'qiongkushitai', label: '约90-120 km / 3-4h', note: '山路慢开' },
+          { from: 'qiongkushitai', to: 'qiongkushitaiRide', label: '村内 / 2-3h', note: '野骑首选' }
+        ]
+      },
+      {
+        day: 8,
+        title: '琼库什台 → 巩留/新源 → 那拉提',
+        distance: '约 300-360 km，6-8 小时，住那拉提',
+        ids: ['qiongkushitai', 'gongliu', 'nalati'],
+        segments: [
+          { from: 'qiongkushitai', to: 'gongliu', label: '约180-220 km / 4-5h', note: '出山路慢' },
+          { from: 'gongliu', to: 'nalati', label: '约130 km / 2-3h', note: '抵达那拉提' }
+        ]
+      },
+      {
+        day: 9,
+        title: '那拉提 → 唐布拉 → 乔尔玛/尼勒克',
+        distance: '约 220-300 km，5-7 小时，住乔尔玛或尼勒克',
+        ids: ['nalati', 'nalatiRide', 'tangbula', 'qorma'],
+        segments: [
+          { from: 'nalati', to: 'nalatiRide', label: '景区内 / 1-2h', note: '轻体验可选' },
+          { from: 'nalati', to: 'tangbula', label: '约150 km / 3h', note: '边走边停' },
+          { from: 'tangbula', to: 'qorma', label: '约90-120 km / 2-3h', note: '住乔尔玛/尼勒克' }
+        ]
+      },
+      {
+        day: 10,
+        title: '乔尔玛 → 独库北段 → 独山子 → 乌鲁木齐',
+        distance: '约 430-520 km，7-9 小时，返乌鲁木齐',
+        ids: ['qorma', 'hashilegen', 'dushanzi2', 'urumqi'],
+        segments: [
+          { from: 'qorma', to: 'hashilegen', label: '约90 km / 2h', note: '独库达坂段' },
+          { from: 'hashilegen', to: 'dushanzi2', label: '约130 km / 3h', note: '弯道多' },
+          { from: 'dushanzi2', to: 'urumqi', label: '约250 km / 3h', note: '高速返程' }
+        ]
+      }
+    ];
+
+    function outOfChina(lat, lng) {
+      return lng < 72.004 || lng > 137.8347 || lat < 0.8293 || lat > 55.8271;
+    }
+
+    function transformLat(x, y) {
+      let ret = -100 + 2 * x + 3 * y + .2 * y * y + .1 * x * y + .2 * Math.sqrt(Math.abs(x));
+      ret += (20 * Math.sin(6 * x * Math.PI) + 20 * Math.sin(2 * x * Math.PI)) * 2 / 3;
+      ret += (20 * Math.sin(y * Math.PI) + 40 * Math.sin(y / 3 * Math.PI)) * 2 / 3;
+      ret += (160 * Math.sin(y / 12 * Math.PI) + 320 * Math.sin(y * Math.PI / 30)) * 2 / 3;
+      return ret;
+    }
+
+    function transformLng(x, y) {
+      let ret = 300 + x + 2 * y + .1 * x * x + .1 * x * y + .1 * Math.sqrt(Math.abs(x));
+      ret += (20 * Math.sin(6 * x * Math.PI) + 20 * Math.sin(2 * x * Math.PI)) * 2 / 3;
+      ret += (20 * Math.sin(x * Math.PI) + 40 * Math.sin(x / 3 * Math.PI)) * 2 / 3;
+      ret += (150 * Math.sin(x / 12 * Math.PI) + 300 * Math.sin(x / 30 * Math.PI)) * 2 / 3;
+      return ret;
+    }
+
+    function wgs84ToGcj02(lat, lng) {
+      if (outOfChina(lat, lng)) return [lat, lng];
+      const a = 6378245;
+      const ee = 0.00669342162296594323;
+      let dLat = transformLat(lng - 105, lat - 35);
+      let dLng = transformLng(lng - 105, lat - 35);
+      const radLat = lat / 180 * Math.PI;
+      let magic = Math.sin(radLat);
+      magic = 1 - ee * magic * magic;
+      const sqrtMagic = Math.sqrt(magic);
+      dLat = (dLat * 180) / ((a * (1 - ee)) / (magic * sqrtMagic) * Math.PI);
+      dLng = (dLng * 180) / (a / sqrtMagic * Math.cos(radLat) * Math.PI);
+      return [lat + dLat, lng + dLng];
+    }
+
+    points.forEach(point => {
+      const [mapLat, mapLng] = wgs84ToGcj02(point.lat, point.lng);
+      point.mapLat = mapLat;
+      point.mapLng = mapLng;
+    });
+
+    const byId = Object.fromEntries(points.map(point => [point.id, point]));
+    const map = L.map('map', { zoomControl: true }).setView(wgs84ToGcj02(43.72, 83.7), 7);
+
+    const gaodeNormal = L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', {
+      subdomains: ['1', '2', '3', '4'],
+      maxZoom: 18,
+      attribution: '高德地图'
+    }).addTo(map);
+
+    const gaodeSatellite = L.layerGroup([
+      L.tileLayer('https://webst0{s}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}', {
+        subdomains: ['1', '2', '3', '4'],
+        maxZoom: 18,
+        attribution: '高德影像'
+      }),
+      L.tileLayer('https://webst0{s}.is.autonavi.com/appmaptile?style=8&x={x}&y={y}&z={z}', {
+        subdomains: ['1', '2', '3', '4'],
+        maxZoom: 18,
+        attribution: '高德标注'
+      })
+    ]);
+
+    const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '&copy; OpenStreetMap contributors'
+    });
+
+    L.control.layers({
+      '高德地图': gaodeNormal,
+      '高德影像': gaodeSatellite,
+      'OSM 备用': osm
+    }, null, { position: 'topright' }).addTo(map);
+
+    const markerLayer = L.layerGroup().addTo(map);
+    const routeLayer = L.layerGroup().addTo(map);
+    const segmentLayer = L.layerGroup();
+    let activeDayLine = null;
+    let segmentLabelsVisible = !window.matchMedia('(max-width: 900px)').matches;
+    const markers = new Map();
+
+    function markerIcon(point) {
+      return L.divIcon({
+        className: '',
+        html: `<div class="marker-pin" style="background:${pointColors[point.type]}"><span>${point.day}</span></div>`,
+        iconSize: [30, 30],
+        iconAnchor: [15, 30],
+        popupAnchor: [0, -30]
+      });
+    }
+
+    function popupHtml(point) {
+      const labels = {
+        must: ['必去', pointColors.must],
+        good: ['推荐', pointColors.good],
+        pass: ['顺路', pointColors.pass],
+        stay: ['住宿/中转', pointColors.stay],
+        ride: ['骑马推荐', pointColors.ride]
+      };
+      const [label, color] = labels[point.type];
+      return `
+        <div class="popup">
+          <h3>${point.name}</h3>
+          <span class="tag" style="background:${color}">${label}</span>
+          <span class="tag" style="background:#596675">D${point.day}</span>
+          <p><strong>特色：</strong>${point.feature}</p>
+          <p><strong>建议：</strong>${point.tip}</p>
+        </div>
+      `;
+    }
+
+    function addMarkers(filter = 'all') {
+      markerLayer.clearLayers();
+      markers.clear();
+      points
+        .filter(point => filter === 'all' || point.type === filter)
+        .forEach(point => {
+          const marker = L.marker([point.mapLat, point.mapLng], { icon: markerIcon(point) })
+            .bindPopup(popupHtml(point));
+          marker.addTo(markerLayer);
+          markers.set(point.id, marker);
+        });
+    }
+
+    function drawRoutes() {
+      routeLayer.clearLayers();
+      segmentLayer.clearLayers();
+      days.forEach(day => {
+        const latLngs = day.ids.map(id => byId[id]).filter(Boolean).map(point => [point.mapLat, point.mapLng]);
+        L.polyline(latLngs, {
+          color: '#1b6fd8',
+          opacity: 0.42,
+          weight: 4,
+          lineCap: 'round',
+          lineJoin: 'round'
+        }).addTo(routeLayer);
+
+        day.segments.forEach(segment => {
+          const from = byId[segment.from];
+          const to = byId[segment.to];
+          if (!from || !to) return;
+          const mid = [(from.mapLat + to.mapLat) / 2, (from.mapLng + to.mapLng) / 2];
+          const label = L.marker(mid, {
+            icon: L.divIcon({
+              className: '',
+              html: `<div class="segment-label"><strong>D${day.day}</strong>${segment.label}</div>`,
+              iconSize: [98, 36],
+              iconAnchor: [49, 18]
+            }),
+            interactive: true
+          }).bindPopup(`
+            <div class="popup">
+              <h3>D${day.day} 路段</h3>
+              <p><strong>${from.name} → ${to.name}</strong></p>
+              <p><strong>预计：</strong>${segment.label}</p>
+              <p><strong>提示：</strong>${segment.note}</p>
+            </div>
+          `);
+          label.addTo(segmentLayer);
+        });
+      });
+      if (segmentLabelsVisible) {
+        segmentLayer.addTo(map);
+      }
+    }
+
+    function fitAll() {
+      const bounds = L.latLngBounds(points.map(point => [point.mapLat, point.mapLng]));
+      map.fitBounds(bounds.pad(0.12));
+      setActiveButton('fitAll');
+      if (activeDayLine) {
+        activeDayLine.remove();
+        activeDayLine = null;
+      }
+    }
+
+    function focusDay(dayNumber) {
+      const day = days.find(item => item.day === dayNumber);
+      if (!day) return;
+      const latLngs = day.ids.map(id => byId[id]).filter(Boolean).map(point => [point.mapLat, point.mapLng]);
+      const bounds = L.latLngBounds(latLngs);
+      map.fitBounds(bounds.pad(0.18));
+      if (activeDayLine) activeDayLine.remove();
+      activeDayLine = L.polyline(latLngs, {
+        color: '#ff8a00',
+        opacity: 0.95,
+        weight: 7,
+        lineCap: 'round',
+        lineJoin: 'round'
+      }).addTo(map);
+      const firstMarker = markers.get(day.ids[0]);
+      if (firstMarker) firstMarker.openPopup();
+      document.querySelectorAll('.day-card').forEach(card => {
+        const isActive = Number(card.dataset.day) === dayNumber;
+        card.classList.toggle('is-open', isActive);
+        card.style.borderColor = isActive ? '#1b6fd8' : 'var(--line)';
+      });
+    }
+
+    function setActiveButton(id) {
+      document.querySelectorAll('.toolbar button').forEach(button => {
+        button.classList.toggle('is-active', button.id === id);
+      });
+    }
+
+    function renderDays() {
+      const root = document.getElementById('days');
+      root.innerHTML = days.map(day => {
+        const spotList = day.ids
+          .filter((id, index, arr) => arr.indexOf(id) === index)
+          .map(id => byId[id])
+          .filter(Boolean)
+          .map(point => `<li>${point.name}：${point.feature}</li>`)
+          .join('');
+        const segmentList = day.segments
+          .map(segment => {
+            const from = byId[segment.from];
+            const to = byId[segment.to];
+            if (!from || !to) return '';
+            return `<li>${from.name} → ${to.name}：${segment.label}，${segment.note}</li>`;
+          })
+          .join('');
+        return `
+          <article class="day-card" data-day="${day.day}">
+            <div class="day-head" role="button" tabindex="0">
+              <div class="day-num">D${day.day}</div>
+              <div>
+                <h2 class="day-title">${day.title}</h2>
+                <div class="day-meta">${day.distance}</div>
+              </div>
+            </div>
+            <ul class="segments">${segmentList}</ul>
+            <ul class="spots">${spotList}</ul>
+          </article>
+        `;
+      }).join('');
+
+      document.querySelectorAll('.day-card').forEach(card => {
+        const dayNumber = Number(card.dataset.day);
+        card.querySelector('.day-head').addEventListener('click', () => focusDay(dayNumber));
+        card.querySelector('.day-head').addEventListener('keydown', event => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            focusDay(dayNumber);
+          }
+        });
+      });
+    }
+
+    document.getElementById('fitAll').addEventListener('click', fitAll);
+    document.getElementById('mustOnly').addEventListener('click', () => {
+      addMarkers('must');
+      setActiveButton('mustOnly');
+      fitAll();
+      setActiveButton('mustOnly');
+    });
+    document.getElementById('rideOnly').addEventListener('click', () => {
+      addMarkers('ride');
+      setActiveButton('rideOnly');
+      const ridePoints = points.filter(point => point.type === 'ride');
+      map.fitBounds(L.latLngBounds(ridePoints.map(point => [point.mapLat, point.mapLng])).pad(0.18));
+    });
+    document.getElementById('toggleSegments').addEventListener('click', () => {
+      segmentLabelsVisible = !segmentLabelsVisible;
+      if (segmentLabelsVisible) {
+        segmentLayer.addTo(map);
+      } else {
+        segmentLayer.removeFrom(map);
+      }
+      document.getElementById('toggleSegments').textContent = segmentLabelsVisible ? '隐藏路段标签' : '显示路段标签';
+    });
+    document.getElementById('resetFilter').addEventListener('click', () => {
+      addMarkers('all');
+      setActiveButton('resetFilter');
+      fitAll();
+      setActiveButton('resetFilter');
+    });
+
+    renderDays();
+    addMarkers();
+    drawRoutes();
+    document.getElementById('toggleSegments').textContent = segmentLabelsVisible ? '隐藏路段标签' : '显示路段标签';
+    fitAll();
+  </script>
+</body>
+</html>
