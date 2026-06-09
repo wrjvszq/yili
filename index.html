@@ -180,6 +180,22 @@
       margin: 5px 0;
     }
 
+    .day-info {
+      margin: 0;
+      padding: 0 12px 12px 60px;
+      color: #314252;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .day-info p {
+      margin: 7px 0 0;
+    }
+
+    .day-info strong {
+      color: var(--ink);
+    }
+
     .segments {
       margin: 0;
       padding: 0 12px 12px 60px;
@@ -247,6 +263,11 @@
       margin: 6px 0;
       color: #344250;
       line-height: 1.45;
+    }
+
+    .popup .priority {
+      color: #9b2c2c;
+      font-weight: 700;
     }
 
     .leaflet-touch .leaflet-control-layers,
@@ -378,8 +399,13 @@
         font-size: 12px;
       }
 
+      .day-info {
+        padding: 0 10px 10px 54px;
+      }
+
       .day-card:not(.is-open) .segments,
-      .day-card:not(.is-open) .spots {
+      .day-card:not(.is-open) .spots,
+      .day-card:not(.is-open) .day-info {
         display: none;
       }
 
@@ -416,6 +442,7 @@
 
       <div class="toolbar">
         <button id="fitAll" class="is-active" type="button">全线</button>
+        <button id="bookingOnly" type="button">预约/车辆</button>
         <button id="mustOnly" type="button">只看必去</button>
         <button id="rideOnly" type="button">骑马点</button>
         <button id="toggleSegments" type="button">隐藏路段标签</button>
@@ -432,7 +459,7 @@
 
       <section id="days"></section>
 
-      <p class="note">地图连线为规划示意线，不代表真实道路轨迹；路段时间是自驾估算，山区、景区换乘、拍照停车会让耗时浮动。景区入口、停车场和临时交通管制请以高德/百度导航及景区当天公告为准。伊昭公路和独库公路受天气影响明显，出发前一天务必复核路况。</p>
+      <p class="note">地图连线为规划示意线，不代表真实道路轨迹；路段时间是自驾估算，山区、景区换乘、拍照停车会让耗时浮动。预约、自驾票、车辆电子通行证、道路开放时间和临时交通管制变化很快，请在出发前 1-3 天以景区官方公众号/小程序、高德/百度导航和交警公告为准；伊昭公路、独库公路受天气影响明显，出发前一天务必复核路况。</p>
     </aside>
 
     <div id="map" aria-label="新疆伊犁 10 天自驾环线地图"></div>
@@ -481,6 +508,159 @@
       { id: 'hashilegen', name: '哈希勒根达坂', type: 'good', day: 10, lat: 44.197, lng: 84.572, feature: '独库北段高山达坂，常见雪墙、盘山路和强烈海拔景观。', tip: '弯多坡陡，遇雾或雨雪务必降低速度。' },
       { id: 'dushanzi2', name: '独山子返程节点', type: 'pass', day: 10, lat: 44.328, lng: 84.886, feature: '结束独库北段后回到高速网络。', tip: '如果体力不足，可以在独山子多住一晚再回乌鲁木齐。' }
     ];
+
+    const pointDetails = {
+      urumqi: {
+        booking: '无需景区预约；取车时确认驾驶证、行驶证/租车合同、保险和备胎工具。',
+        bookingLevel: 'normal',
+        caution: '新疆长线自驾安检和区间限速常见，身份证随身带；出城前采购防晒、雨具、保暖层、饮用水和常用药。',
+        food: '大盘鸡、烤包子、抓饭、拌面、烤肉、酸奶。'
+      },
+      s101: {
+        booking: '普通公路观景段无需预约；遇施工、塌方或恶劣天气按交警临时管制通行。',
+        bookingLevel: 'normal',
+        caution: '弯道和观景停车多，别在弯心、坡顶停车；雨后碎石和泥泞路段要慢。',
+        food: '路餐为主，建议在乌鲁木齐或独山子解决正餐。'
+      },
+      anjihai: {
+        booking: '通常无需预约，按现场开放和停车管理执行。',
+        bookingLevel: 'normal',
+        caution: '峡谷边风大且崖边危险，不靠近无护栏区域；无人机和临停按现场要求。',
+        food: '可回独山子吃芦花鸡、大盘鸡、烤肉和拌面。'
+      },
+      dushanzi: {
+        booking: '住宿旺季建议提前订；进入独库前不需要景区预约，但要看独库通车和管制公告。',
+        bookingLevel: 'watch',
+        caution: '出发赛湖或独库前加满油，检查胎压；独库旺季车流大，尽量早出发。',
+        food: '独山子芦花鸡、大盘鸡、烤肉、椒麻鸡、馕。'
+      },
+      sayram: {
+        booking: '重点提前办：旺季建议提前 1-3 天在“赛里木湖旅游/一部手机游赛湖”等官方渠道实名购票；自驾环湖需同步确认自驾票或车辆电子通行要求。',
+        bookingLevel: 'high',
+        caution: '环湖风大温差大，下午逆光/侧光漂亮；露营、明火、无人机、停车点按景区当天规定。',
+        food: '景区内以简餐为主；可在果子沟/清水河/伊宁吃手抓肉、抓饭、烤肉、酸奶。'
+      },
+      guozigou: {
+        booking: '无需单独预约；停车和观景点以现场交通管理为准。',
+        bookingLevel: 'normal',
+        caution: '桥区停车点有限，不要占用应急车道；雾雨天能见度低。',
+        food: '适合轻停拍照，正餐放到霍城或伊宁。'
+      },
+      huocheng: {
+        booking: '薰衣草园区可能按花期和地块开放售票，旺季建议当天查营业状态。',
+        bookingLevel: 'watch',
+        caution: '花期通常受天气影响，6 月更稳；拍照别踩踏花田。',
+        food: '霍城/清水河可吃烤肉、抓饭、拌面、酸奶和本地水果。'
+      },
+      yining: {
+        booking: '城市游览一般无需预约；六星街、喀赞其按街区管理和停车情况安排。',
+        bookingLevel: 'normal',
+        caution: '晚高峰和热门街区停车紧张，适合打车或步行；给后续山路留休息时间。',
+        food: '伊犁馕包肉、熏马肠、马肉那仁、手抓肉、烤包子、手工冰淇淋、格瓦斯。'
+      },
+      yizhao: {
+        booking: '重点看路况：2026 通车季官方公告为每日 9:00-21:00 开放，7 座以上车辆禁行；无需景区预约，但可能临时交通管制。',
+        bookingLevel: 'high',
+        caution: '只白天走，雨雾雪和落石风险高；不要赶夜路，导航时间要打富余。',
+        food: '路上以补给为主，到昭苏吃羊排揪片子、熏马肉、马肉那仁。'
+      },
+      zhaosu: {
+        booking: '住宿旺季建议提前订；去夏塔前先确认夏塔门票/自驾票和入园时段。',
+        bookingLevel: 'watch',
+        caution: '昭苏海拔和温差更明显，早晚加衣；去夏塔前加油。',
+        food: '昭苏羊排揪片子、野蘑菇汤饭、熏马肉马肠、手抓饭、烤全羊。'
+      },
+      xiata: {
+        booking: '重点提前办：夏塔旺季建议提前 3-7 天在“智游昭苏/夏塔景区”相关官方渠道确认门票、自驾票或区间车票；自驾入园名额、时段和终点会随景区政策变化。',
+        bookingLevel: 'high',
+        caution: '景区内无加油站，天气变化快；温泉酒店、将军桥、徒步/骑马衔接和末班车时间要进门先确认。',
+        food: '景区内简餐有限，建议备路餐；住昭苏/察汗乌苏可吃羊肉汤饭、烤肉、抓饭和奶茶。'
+      },
+      xiataRide: {
+        booking: '骑马通常需在景区或民宿/马队现场确认，旺季早到早排；先问清路线、时长、价格和是否含护具。',
+        bookingLevel: 'watch',
+        caution: '新手不跑马，雨后马道泥滑；保留返程观光车时间。',
+        food: '骑马前别吃太撑，带水和高能量小食；正餐回昭苏或特克斯。'
+      },
+      tekes: {
+        booking: '住宿旺季建议提前订；喀拉峻、阔克苏门票和区间车建议提前一天确认。',
+        bookingLevel: 'watch',
+        caution: '县城是连续两天草原行程的补给点，备现金、雨具和保暖衣物。',
+        food: '特克斯烤肉、抓饭、拌面、椒麻鸡、酸奶、熏马肉。'
+      },
+      kalajun: {
+        booking: '建议提前在官方/OTA 渠道确认门票、区间车和草原/峡谷联票；旺季早进景区。',
+        bookingLevel: 'watch',
+        caution: '草原和阔克苏都玩会很耗体力，优先选最想看的区域；天气差时坡线和雪山能见度会受影响。',
+        food: '景区内简餐为主，正餐回特克斯吃烤肉、抓饭和拌面。'
+      },
+      kalajunRide: {
+        booking: '骑马路线多为景区经营项目，现场或官方渠道确认价格、路线和保险。',
+        bookingLevel: 'watch',
+        caution: '别离队进入未开放草坡，拍照停车/下马听马队安排。',
+        food: '骑马后回特克斯补正餐。'
+      },
+      koksu: {
+        booking: '通常随喀拉峻/阔克苏门票和区间车安排，提前确认联票是否覆盖。',
+        bookingLevel: 'watch',
+        caution: '峡谷换乘耗时，末班车和回县城时间要留足。',
+        food: '景区内简餐为主，晚餐回特克斯。'
+      },
+      qiongkushitai: {
+        booking: '重点提前订住宿和马队：村内住宿、停车和热门马队旺季紧张；如遇限流/修路，以当地通知和民宿提醒为准。',
+        bookingLevel: 'high',
+        caution: '进村山路窄弯多，雨后泥泞，尽量白天抵达；村内尊重牧民草场和围栏。',
+        food: '民宿家常饭、手抓肉、奶茶、酸奶、烤肉、馕。'
+      },
+      qiongkushitaiRide: {
+        booking: '通过民宿约靠谱马队，提前说清 2-3 小时草原山坡线、价格、是否牵马和返程点。',
+        bookingLevel: 'high',
+        caution: '新手不要跑马，不独自进深谷；带防风外套，手机离线地图提前下好。',
+        food: '骑马前后在民宿吃热汤饭、奶茶和简餐更稳。'
+      },
+      gongliu: {
+        booking: '中转补给无需预约；那拉提自驾票建议在这里之前就办好。',
+        bookingLevel: 'normal',
+        caution: '这天路程长，午饭、加油、充电在县城解决，别把补给压到景区门口。',
+        food: '巩留/新源可吃抓饭、拌面、烤肉、椒麻鸡、丸子汤。'
+      },
+      nalati: {
+        booking: '重点提前办：那拉提自驾业务已改为线上预约办理，可提前预约 7 日内自驾票；实名购票并确认车辆信息、入园线路和时段。',
+        bookingLevel: 'high',
+        caution: '空中草原、河谷草原、盘龙谷道不要贪多；自驾入园也要服从景区线路和停车管理。',
+        food: '那拉提镇/景区周边吃哈萨克奶茶、手抓肉、熏马肠、纳仁、烤全羊、烤肉。'
+      },
+      nalatiRide: {
+        booking: '成熟景区骑马项目通常现场办理，旺季先确认排队、路线和费用。',
+        bookingLevel: 'watch',
+        caution: '轻体验适合新手，别在景区道路旁随意骑行或下马拍照。',
+        food: '体验后回那拉提镇吃手抓肉、奶茶和烤肉。'
+      },
+      tangbula: {
+        booking: '百里画廊普通路段通常无需预约；遇施工、雨雪或落石按交通管制通行。',
+        bookingLevel: 'normal',
+        caution: '观景停车不要压草场和占道；商业配套分散，提前备水和路餐。',
+        food: '沿线以牧家乐和简餐为主，可吃奶茶、手抓肉、烤肉。'
+      },
+      qorma: {
+        booking: '住宿很少，旺季务必提前订；进入独库北段前看交警和交通部门通车公告。',
+        bookingLevel: 'high',
+        caution: '乔尔玛附近施工和大车借道信息要留意；高海拔早晚冷，油量留足。',
+        food: '乔尔玛/尼勒克以拌面、抓饭、烤肉、羊肉汤和简餐为主。'
+      },
+      hashilegen: {
+        booking: '无需景区预约，但独库北段季节性开放，遇雨雪、落石、事故会临时管制。',
+        bookingLevel: 'high',
+        caution: '达坂弯多坡陡，禁止疲劳驾驶；高海拔低温，雪墙路段别长时间停在危险位置。',
+        food: '沿线补给少，带路餐；正餐回独山子或乌鲁木齐。'
+      },
+      dushanzi2: {
+        booking: '返程无需预约；如果当天太累，独山子住宿可临时调整但旺季最好提前看房。',
+        bookingLevel: 'normal',
+        caution: '独库下来后别立刻赶夜路，确认精神状态再返乌鲁木齐。',
+        food: '独山子芦花鸡、大盘鸡、烤肉、椒麻鸡、馕。'
+      }
+    };
 
     const days = [
       {
@@ -591,6 +771,49 @@
       }
     ];
 
+    const dayDetails = {
+      1: {
+        alert: '长线第一天以适应车况为主；S101 和安集海都按现场路况/开放管理走，晚上在独山子补给并加满油。',
+        food: '独山子芦花鸡、大盘鸡、烤肉、椒麻鸡。'
+      },
+      2: {
+        alert: '赛里木湖自驾环湖请提前确认实名门票、自驾票和车辆电子通行要求；下午入园看光线，风大要加衣。',
+        food: '景区简餐或清水河/赛湖周边手抓肉、抓饭、酸奶。'
+      },
+      3: {
+        alert: '果子沟停车点有限；霍城薰衣草看花期和园区开放；晚上到伊宁适合集中吃饭和补给。',
+        food: '伊宁馕包肉、熏马肠、马肉那仁、烤包子、手工冰淇淋。'
+      },
+      4: {
+        alert: '伊昭公路通行重点看官方公告：2026 通车季每日 9:00-21:00，7 座以上车辆禁行，雨雾天别硬走。',
+        food: '昭苏羊排揪片子、野蘑菇汤饭、熏马肉马肠、手抓饭。'
+      },
+      5: {
+        alert: '夏塔是本行程最需要提前抢票/确认自驾名额的点之一；景区无加油站，入园前确认末班车和徒步/骑马衔接。',
+        food: '昭苏/察汗乌苏羊肉汤饭、烤肉、抓饭；晚到特克斯吃拌面和椒麻鸡。'
+      },
+      6: {
+        alert: '喀拉峻和阔克苏都玩会很满，提前确认门票/区间车/联票，天气差时优先保留一个核心区域。',
+        food: '特克斯烤肉、抓饭、拌面、酸奶、熏马肉。'
+      },
+      7: {
+        alert: '琼库什台住宿、停车和马队旺季紧张，建议提前让民宿协助约马队；进村山路窄，务必白天抵达。',
+        food: '民宿手抓肉、奶茶、酸奶、烤肉、家常汤饭。'
+      },
+      8: {
+        alert: '出山到那拉提车程长，巩留/新源解决午饭、加油和充电；那拉提自驾票最好在抵达前办好。',
+        food: '巩留/新源抓饭、拌面、烤肉、椒麻鸡、丸子汤。'
+      },
+      9: {
+        alert: '那拉提自驾票实行线上预约，可提前预约 7 日内；唐布拉和乔尔玛配套少，乔尔玛住宿要提前订。',
+        food: '那拉提哈萨克奶茶、手抓肉、纳仁、熏马肠、烤全羊；乔尔玛以简餐为主。'
+      },
+      10: {
+        alert: '独库北段季节性开放，雨雪、落石、施工都会临时管制；乔尔玛附近施工车辆借道时按交警指挥慢行。',
+        food: '沿线带路餐，回独山子/乌鲁木齐再吃大盘鸡、烤肉、抓饭。'
+      }
+    };
+
     function outOfChina(lat, lng) {
       return lng < 72.004 || lng > 137.8347 || lat < 0.8293 || lat > 55.8271;
     }
@@ -627,9 +850,14 @@
     }
 
     points.forEach(point => {
+      Object.assign(point, pointDetails[point.id] || {});
       const [mapLat, mapLng] = wgs84ToGcj02(point.lat, point.lng);
       point.mapLat = mapLat;
       point.mapLng = mapLng;
+    });
+
+    days.forEach(day => {
+      Object.assign(day, dayDetails[day.day] || {});
     });
 
     const byId = Object.fromEntries(points.map(point => [point.id, point]));
@@ -698,6 +926,9 @@
           <span class="tag" style="background:#596675">D${point.day}</span>
           <p><strong>特色：</strong>${point.feature}</p>
           <p><strong>建议：</strong>${point.tip}</p>
+          <p class="${point.bookingLevel === 'high' ? 'priority' : ''}"><strong>预约/车辆：</strong>${point.booking || '按现场公告执行。'}</p>
+          <p><strong>注意：</strong>${point.caution || '山区天气和路况变化快，出发前复核。'}</p>
+          <p><strong>美食：</strong>${point.food || '优先在县城和住宿点解决正餐。'}</p>
         </div>
       `;
     }
@@ -706,7 +937,7 @@
       markerLayer.clearLayers();
       markers.clear();
       points
-        .filter(point => filter === 'all' || point.type === filter)
+        .filter(point => filter === 'all' || point.type === filter || (filter === 'booking' && ['high', 'watch'].includes(point.bookingLevel)))
         .forEach(point => {
           const marker = L.marker([point.mapLat, point.mapLng], { icon: markerIcon(point) })
             .bindPopup(popupHtml(point));
@@ -823,6 +1054,10 @@
               </div>
             </div>
             <ul class="segments">${segmentList}</ul>
+            <div class="day-info">
+              <p><strong>预约/注意：</strong>${day.alert || '按景区和交通当天公告执行。'}</p>
+              <p><strong>当天吃什么：</strong>${day.food || '优先在县城和住宿点解决正餐。'}</p>
+            </div>
             <ul class="spots">${spotList}</ul>
           </article>
         `;
@@ -841,6 +1076,12 @@
     }
 
     document.getElementById('fitAll').addEventListener('click', fitAll);
+    document.getElementById('bookingOnly').addEventListener('click', () => {
+      addMarkers('booking');
+      setActiveButton('bookingOnly');
+      const bookingPoints = points.filter(point => ['high', 'watch'].includes(point.bookingLevel));
+      map.fitBounds(L.latLngBounds(bookingPoints.map(point => [point.mapLat, point.mapLng])).pad(0.18));
+    });
     document.getElementById('mustOnly').addEventListener('click', () => {
       addMarkers('must');
       setActiveButton('mustOnly');
