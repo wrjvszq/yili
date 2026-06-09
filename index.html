@@ -211,6 +211,14 @@
       margin: 5px 0;
     }
 
+    .spot-caution {
+      display: block;
+      margin-top: 3px;
+      color: #7a4a08;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
     .day-info {
       margin: 0;
       padding: 0 12px 12px 60px;
@@ -1146,7 +1154,7 @@
           .filter((id, index, arr) => arr.indexOf(id) === index)
           .map(id => byId[id])
           .filter(Boolean)
-          .map(point => `<li>${point.name}：${point.feature}</li>`)
+          .map(point => `<li>${point.name}：${point.feature}<span class="spot-caution">注意：${point.caution || '按现场公告和导航实时路况执行。'}</span></li>`)
           .join('');
         const segmentList = day.segments
           .map(segment => {
