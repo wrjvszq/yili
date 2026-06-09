@@ -538,7 +538,7 @@
         <span><i class="dot" style="background: var(--pass)"></i>顺路</span>
         <span><i class="dot" style="background: var(--stay)"></i>住宿/中转</span>
         <span><i class="dot" style="background: var(--ride)"></i>骑马推荐</span>
-        <span><i class="dot" style="background: var(--backup)"></i>备选</span>
+        <span><i class="dot" style="background: var(--backup)"></i>备选/绕行</span>
       </div>
 
       <section id="days"></section>
@@ -597,7 +597,7 @@
       { id: 'nalati', name: '那拉提', type: 'must', day: 7, lat: 43.323, lng: 84.033, feature: '空中草原、河谷草原、盘龙谷道和哈萨克民俗，是伊犁经典名片。', tip: '自驾票抢不到时，可改坐区间车；若不想坐区间车，则改夏塔或琼库什台备选。' },
       { id: 'nalatiRide', name: '那拉提骑马轻体验', type: 'ride', day: 7, lat: 43.345, lng: 84.016, feature: '成熟景区内骑马体验，安全和配套更稳定，但野性弱一些。', tip: '适合新手或只想体验拍照的人，不作为野骑主场。' },
       { id: 'bayinbuluk', name: '巴音布鲁克', type: 'must', day: 8, lat: 43.031, lng: 84.151, feature: '高山草原、天鹅湖和九曲十八弯日落，是独库中段最值得专门住一晚的点。', tip: '尽量下午到镇上，坐区间车进景区等日落；天气差时日落效果会打折。' },
-      { id: 'tangbula', name: '唐布拉百里画廊', type: 'good', day: 9, lat: 43.827, lng: 83.628, feature: '河谷、草甸、森林和雪山一路铺开，商业化程度低一些。', tip: '从巴音布鲁克回独库北段会绕回那拉提/乔尔玛，适合边开边停。' },
+      { id: 'tangbula', name: '唐布拉百里画廊绕行', type: 'backup', day: null, lat: 43.827, lng: 83.628, feature: '河谷、草甸、森林和雪山一路铺开，商业化程度低一些。', tip: '它不在独库主线上，更适合作为 D9 时间充裕时从乔尔玛/尼勒克方向绕出去的支线。' },
       { id: 'qorma', name: '乔尔玛', type: 'stay', day: 9, lat: 43.881, lng: 84.179, feature: '独库中北段关键节点，靠近乔尔玛烈士陵园。', tip: '住宿有限，旺季提前订；也可住尼勒克或独山子。' },
 
       { id: 'hashilegen', name: '哈希勒根达坂', type: 'good', day: 10, lat: 44.197, lng: 84.572, feature: '独库北段高山达坂，常见雪墙、盘山路和强烈海拔景观。', tip: '弯多坡陡，遇雾或雨雪务必降低速度。' },
@@ -726,9 +726,9 @@
         food: '巴音布鲁克镇可吃黑头羊、手抓肉、烤肉、奶茶、酸奶和拌面。'
       },
       tangbula: {
-        booking: '百里画廊普通路段通常无需预约；遇施工、雨雪或落石按交通管制通行。',
+        booking: '唐布拉是 D9 支线绕行，普通路段通常无需预约；时间不够就不要硬加。',
         bookingLevel: 'normal',
-        caution: '观景停车不要压草场和占道；商业配套分散，提前备水和路餐。',
+        caution: '它会把路线往西拉开，不属于独库主线；观景停车不要压草场和占道，提前备水和路餐。',
         food: '沿线以牧家乐和简餐为主，可吃奶茶、手抓肉、烤肉。'
       },
       qorma: {
@@ -836,13 +836,12 @@
       },
       {
         day: 9,
-        title: '巴音布鲁克 → 那拉提 → 唐布拉 → 乔尔玛/尼勒克',
-        distance: '约 300-380 km，7-9 小时，住乔尔玛或尼勒克',
-        ids: ['bayinbuluk', 'nalati', 'tangbula', 'qorma'],
+        title: '巴音布鲁克 → 独库中段 → 乔尔玛/尼勒克',
+        distance: '约 260-330 km，6-8 小时，住乔尔玛或尼勒克；唐布拉只作支线绕行',
+        ids: ['bayinbuluk', 'nalati', 'qorma'],
         segments: [
           { from: 'bayinbuluk', to: 'nalati', label: '约90-120 km / 2-3h', note: '独库中段返回' },
-          { from: 'nalati', to: 'tangbula', label: '约150 km / 3h', note: '边走边停' },
-          { from: 'tangbula', to: 'qorma', label: '约90-120 km / 2-3h', note: '住乔尔玛/尼勒克' }
+          { from: 'nalati', to: 'qorma', label: '约160-210 km / 4-5h', note: '独库/乔尔玛方向，唐布拉可选绕行' }
         ]
       },
       {
@@ -892,8 +891,8 @@
         food: '那拉提简餐或路餐；巴音布鲁克镇黑头羊、烤肉、酸奶、拌面。'
       },
       9: {
-        alert: '巴音布鲁克回乔尔玛这天车程偏长，独库中段/北段都要看白天通行和施工管制；乔尔玛住宿建议提前好几天订，也可住尼勒克。',
-        food: '沿线带路餐；唐布拉牧家乐奶茶、手抓肉，乔尔玛/尼勒克以拌面、抓饭、烤肉为主。'
+        alert: '巴音布鲁克回乔尔玛这天按独库主线走；唐布拉不在主线上，只在时间充裕时绕行。独库中段/北段都要看白天通行和施工管制。',
+        food: '沿线带路餐；乔尔玛/尼勒克以拌面、抓饭、烤肉为主。'
       },
       10: {
         alert: '独库北段季节性开放，雨雪、落石、施工都会临时管制；乔尔玛附近施工车辆借道时按交警指挥慢行。',
