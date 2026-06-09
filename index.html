@@ -598,7 +598,7 @@
       { id: 'nalatiRide', name: '那拉提骑马轻体验', type: 'ride', day: 7, lat: 43.345, lng: 84.016, feature: '成熟景区内骑马体验，安全和配套更稳定，但野性弱一些。', tip: '适合新手或只想体验拍照的人，不作为野骑主场。' },
       { id: 'bayinbuluk', name: '巴音布鲁克', type: 'must', day: 8, lat: 43.031, lng: 84.151, feature: '高山草原、天鹅湖和九曲十八弯日落，是独库中段最值得专门住一晚的点。', tip: '尽量下午到镇上，坐区间车进景区等日落；天气差时日落效果会打折。' },
       { id: 'tangbula', name: '唐布拉百里画廊绕行', type: 'backup', day: null, lat: 43.827, lng: 83.628, feature: '河谷、草甸、森林和雪山一路铺开，商业化程度低一些。', tip: '它不在独库主线上，更适合作为 D9 时间充裕时从乔尔玛/尼勒克方向绕出去的支线。' },
-      { id: 'qorma', name: '乔尔玛', type: 'stay', day: 9, lat: 43.881, lng: 84.179, feature: '独库中北段关键节点，靠近乔尔玛烈士陵园。', tip: '住宿有限，旺季提前订；也可住尼勒克或独山子。' },
+      { id: 'qorma', name: '乔尔玛', type: 'stay', day: 9, lat: 43.653, lng: 84.359, feature: '独库 G217 与 S315/伊乔线交汇处附近，是独库中北段关键节点，靠近乔尔玛烈士陵园。', tip: '住宿有限，旺季提前订；也可住尼勒克或独山子。' },
 
       { id: 'hashilegen', name: '哈希勒根达坂', type: 'good', day: 10, lat: 44.197, lng: 84.572, feature: '独库北段高山达坂，常见雪墙、盘山路和强烈海拔景观。', tip: '弯多坡陡，遇雾或雨雪务必降低速度。' },
       { id: 'dushanzi2', name: '独山子返程节点', type: 'pass', day: 10, lat: 44.328, lng: 84.886, feature: '结束独库北段后回到高速网络。', tip: '如果体力不足，可以在独山子多住一晚再回乌鲁木齐。' }
@@ -837,11 +837,11 @@
       {
         day: 9,
         title: '巴音布鲁克 → 独库中段 → 乔尔玛/尼勒克',
-        distance: '约 260-330 km，6-8 小时，住乔尔玛或尼勒克；唐布拉只作支线绕行',
+        distance: '约 180-240 km，5-7 小时，住乔尔玛或尼勒克；唐布拉只作支线绕行',
         ids: ['bayinbuluk', 'nalati', 'qorma'],
         segments: [
           { from: 'bayinbuluk', to: 'nalati', label: '约90-120 km / 2-3h', note: '独库中段返回' },
-          { from: 'nalati', to: 'qorma', label: '约160-210 km / 4-5h', note: '独库/乔尔玛方向，唐布拉可选绕行' }
+          { from: 'nalati', to: 'qorma', label: '约80-100 km / 2-3h', note: '沿 G217 到乔尔玛交汇点，唐布拉可选绕行' }
         ]
       },
       {
@@ -850,7 +850,7 @@
         distance: '约 430-520 km，7-9 小时，返乌鲁木齐',
         ids: ['qorma', 'hashilegen', 'dushanzi2', 'urumqi'],
         segments: [
-          { from: 'qorma', to: 'hashilegen', label: '约90 km / 2h', note: '独库达坂段' },
+          { from: 'qorma', to: 'hashilegen', label: '约60-80 km / 1.5-2h', note: '独库达坂段' },
           { from: 'hashilegen', to: 'dushanzi2', label: '约130 km / 3h', note: '弯道多' },
           { from: 'dushanzi2', to: 'urumqi', label: '约250 km / 3h', note: '高速返程' }
         ]
