@@ -306,7 +306,7 @@
       place-items: center;
       color: #fff;
       font-weight: 800;
-      font-size: 11px;
+      font-size: 10px;
       transform: rotate(45deg);
     }
 
@@ -925,8 +925,31 @@
       return [lat + dLat, lng + dLng];
     }
 
+    const routeDaysByPoint = days.reduce((acc, day) => {
+      [...new Set(day.ids)].forEach(id => {
+        if (!acc[id]) acc[id] = [];
+        acc[id].push(day.day);
+      });
+      return acc;
+    }, {});
+
+    function compactDayLabel(routeDays, fallbackDay) {
+      const uniqueDays = routeDays && routeDays.length ? routeDays : [fallbackDay];
+      if (uniqueDays.length === 1) return String(uniqueDays[0]);
+      const isConsecutive = uniqueDays.every((day, index) => index === 0 || day === uniqueDays[index - 1] + 1);
+      return isConsecutive ? `${uniqueDays[0]}-${uniqueDays[uniqueDays.length - 1]}` : uniqueDays.join('/');
+    }
+
+    function popupDayLabel(routeDays, fallbackDay) {
+      const uniqueDays = routeDays && routeDays.length ? routeDays : [fallbackDay];
+      return uniqueDays.map(day => `D${day}`).join('/');
+    }
+
     points.forEach(point => {
       Object.assign(point, pointDetails[point.id] || {});
+      point.routeDays = routeDaysByPoint[point.id] || [point.day];
+      point.dayLabel = compactDayLabel(point.routeDays, point.day);
+      point.popupDayLabel = popupDayLabel(point.routeDays, point.day);
       const [mapLat, mapLng] = wgs84ToGcj02(point.lat, point.lng);
       point.mapLat = mapLat;
       point.mapLng = mapLng;
@@ -979,7 +1002,7 @@
     function markerIcon(point) {
       return L.divIcon({
         className: '',
-        html: `<div class="marker-pin" style="background:${pointColors[point.type]}"><span>${point.day}</span></div>`,
+        html: `<div class="marker-pin" style="background:${pointColors[point.type]}"><span>${point.dayLabel}</span></div>`,
         iconSize: [30, 30],
         iconAnchor: [15, 30],
         popupAnchor: [0, -30]
@@ -999,7 +1022,7 @@
         <div class="popup">
           <h3>${point.name}</h3>
           <span class="tag" style="background:${color}">${label}</span>
-          <span class="tag" style="background:#596675">D${point.day}</span>
+          <span class="tag" style="background:#596675">${point.popupDayLabel}</span>
           <p><strong>特色：</strong>${point.feature}</p>
           <p><strong>建议：</strong>${point.tip}</p>
           <p class="${point.bookingLevel === 'high' ? 'priority' : ''}"><strong>预约/车辆：</strong>${point.booking || '按现场公告执行。'}</p>
