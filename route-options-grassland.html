@@ -247,6 +247,12 @@
       overflow: hidden;
       background: #e5e7eb;
     }
+    .photo a {
+      display: block;
+      min-height: 118px;
+      color: inherit;
+      text-decoration: none;
+    }
     .photo img {
       width: 100%;
       height: 100%;
@@ -788,8 +794,10 @@
         </div>
         ${day.photos ? `<div class="photo-strip">${day.photos.map(photo => `
           <div class="photo">
-            <img src="${photo.src}" alt="${photo.label}" loading="lazy" referrerpolicy="no-referrer" onerror="this.closest('.photo').remove()">
-            <span>${photo.label} · 马蜂窝参考图</span>
+            <a href="${photo.href || photo.src}" target="_blank" rel="noreferrer">
+              <img src="${photo.src}" alt="${photo.label}" loading="lazy" referrerpolicy="no-referrer" onerror="this.closest('.photo').remove()">
+              <span>${photo.label} · 点击查看原图</span>
+            </a>
           </div>
         `).join('')}</div>` : ''}
         <ol class="route-list">${day.route.map(item => `<li>${item}</li>`).join('')}</ol>
