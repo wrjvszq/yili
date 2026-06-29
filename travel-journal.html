@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>伊犁自驾复盘：计划、避坑、最终路线和旅行日记</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17202a;
+      --muted: #5f6f82;
+      --line: #d9e2ec;
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --blue: #2563eb;
+      --green: #2f855a;
+      --amber: #b7791f;
+      --red: #c2410c;
+      --soft-blue: #edf4ff;
+      --soft-green: #edf8f2;
+      --soft-amber: #fff7e6;
+      --soft-red: #fff1ec;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.58;
+    }
+    main {
+      width: min(1180px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 24px 0 48px;
+    }
+    h1, h2, h3 { letter-spacing: 0; }
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(28px, 4vw, 44px);
+      line-height: 1.18;
+    }
+    h2 { margin: 0 0 10px; font-size: 23px; }
+    h3 { margin: 0 0 6px; font-size: 17px; }
+    p { margin: 0; }
+    a { color: var(--blue); text-decoration: none; }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(300px, .8fr);
+      gap: 16px;
+      align-items: stretch;
+      margin-bottom: 16px;
+    }
+    .hero-copy, .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 8px 22px rgba(31, 41, 51, 0.06);
+    }
+    .hero-copy { padding: 18px; }
+    .lead {
+      max-width: 860px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+    .hero-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 6px 11px;
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      background: #eff6ff;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .hero-photo {
+      min-height: 280px;
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+      border: 1px solid var(--line);
+      background: #d9e2ec;
+    }
+    .hero-photo img {
+      width: 100%;
+      height: 100%;
+      min-height: 280px;
+      display: block;
+      object-fit: cover;
+    }
+    .hero-photo span {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 34px 12px 10px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      background: linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,.72));
+    }
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .metric {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .metric strong { display: block; font-size: 20px; }
+    .metric span { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+    .panel { padding: 15px; margin-top: 14px; }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: end;
+      margin-bottom: 12px;
+    }
+    .section-head p { color: var(--muted); font-size: 14px; max-width: 720px; }
+    .two-col {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 12px;
+    }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfdff;
+    }
+    .card.plan { background: var(--soft-blue); border-color: #bfdbfe; }
+    .card.pitfall { background: var(--soft-red); border-color: #fed7c7; }
+    .card.final { background: var(--soft-green); border-color: #bfe8d0; }
+    .card.summary { background: var(--soft-amber); border-color: #f6d9a8; }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid var(--line);
+      color: #344054;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .tag.red { color: var(--red); border-color: #fed7c7; background: #fff7f2; }
+    .tag.green { color: var(--green); border-color: #bfe8d0; background: #f4fbf7; }
+    .tag.blue { color: var(--blue); border-color: #bfdbfe; background: #f3f7ff; }
+    .card p, .card li { color: var(--muted); font-size: 14px; }
+    ul { margin: 8px 0 0; padding-left: 18px; }
+    li { margin: 5px 0; }
+    #map {
+      height: 520px;
+      min-height: 420px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .map-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(320px, .62fr);
+      gap: 12px;
+      align-items: start;
+    }
+    .route-list { display: grid; gap: 8px; }
+    .route-day {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #fbfdff;
+    }
+    .route-day strong { display: block; }
+    .route-day span { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+    .marker-pin {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border: 2px solid var(--blue);
+      border-radius: 50%;
+      background: #fff;
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 800;
+      box-shadow: 0 4px 12px rgba(31, 41, 51, 0.18);
+    }
+    .marker-pin.skip { border-color: var(--red); color: var(--red); background: #fff7f2; }
+    .journal {
+      display: grid;
+      gap: 10px;
+    }
+    .journal-day {
+      display: grid;
+      grid-template-columns: 120px minmax(0, 1fr);
+      gap: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfdff;
+    }
+    .date-box {
+      border-radius: 8px;
+      background: #eef4fb;
+      padding: 10px;
+      text-align: center;
+      font-weight: 800;
+    }
+    .date-box span { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .photo {
+      position: relative;
+      min-height: 140px;
+      overflow: hidden;
+      border-radius: 8px;
+      background: #d9e2ec;
+    }
+    .photo img { width: 100%; height: 100%; min-height: 140px; object-fit: cover; display: block; }
+    .photo span {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 22px 8px 7px;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      background: linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,.72));
+    }
+    @media (max-width: 920px) {
+      .hero, .two-col, .map-layout { grid-template-columns: 1fr; }
+      .quick-grid, .card-grid, .photo-grid { grid-template-columns: 1fr; }
+      .journal-day { grid-template-columns: 1fr; }
+      #map { height: 430px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <h1>伊犁自驾复盘：计划、避坑、最终路线和旅行日记</h1>
+        <p class="lead">这页记录一次伊犁行程从出发前计划到现场修正的过程。它不是只给一个“完美攻略”，而是把哪些值得留时间、哪些可以跳过、哪些需要看天气和体力讲清楚。</p>
+        <div class="hero-links">
+          <a class="btn" href="route-options-grassland.html">查看出发前规划版</a>
+          <a class="btn" href="#pitfalls">旅行中避坑</a>
+          <a class="btn" href="#final-route">最终推荐路线</a>
+          <a class="btn" href="#journal">旅行日记</a>
+        </div>
+      </div>
+      <a class="hero-photo" href="https://p1-q.mafengwo.net/s11/M00/75/21/wKgBEFt6N_CANxCgAAulwEfkm8M17.jpeg?imageView2%2F2%2Fw%2F900%2Fh%2F520%2Fq%2F70" target="_blank" rel="noreferrer">
+        <img src="https://p1-q.mafengwo.net/s11/M00/75/21/wKgBEFt6N_CANxCgAAulwEfkm8M17.jpeg?imageView2%2F2%2Fw%2F900%2Fh%2F520%2Fq%2F70" alt="赛里木湖参考图">
+        <span>真实复盘的核心取舍：少赶路，把时间留给更值得的湖泊、草原和路段</span>
+      </a>
+    </section>
+
+    <section class="quick-grid" aria-label="行程结论速览">
+      <div class="metric"><strong>计划</strong><span>乌鲁木齐进出，10 天环线</span></div>
+      <div class="metric"><strong>避坑</strong><span>S101/阔克苏不是人人必去</span></div>
+      <div class="metric"><strong>建议</strong><span>赛湖和草原留足时间</span></div>
+      <div class="metric"><strong>形式</strong><span>计划 + 现场记录 + 最终路线</span></div>
+    </section>
+
+    <section class="panel" id="plan">
+      <div class="section-head">
+        <div>
+          <h2>一、出发前计划</h2>
+          <p>最初的规划偏完整打卡：乌鲁木齐出发，经 S101/安集海、赛里木湖、果子沟、伊昭、喀拉峻、巴音布鲁克、唐布拉和独库北段返回。</p>
+        </div>
+      </div>
+      <div class="card-grid">
+        <article class="card plan">
+          <h3>当时为什么这么排</h3>
+          <ul>
+            <li>乌鲁木齐租还车方便，适合做大环线。</li>
+            <li>S101 和安集海提供丹霞、峡谷和公路荒野体验。</li>
+            <li>喀拉峻/阔克苏作为主草原与峡谷组合。</li>
+            <li>巴音布鲁克、唐布拉和独库北段作为后半段重点。</li>
+          </ul>
+        </article>
+        <article class="card plan">
+          <h3>计划版保留价值</h3>
+          <ul>
+            <li>适合第一次做功课时看全局路线和点位关系。</li>
+            <li>导航避坑、预约、住宿、穿搭等信息仍可复用。</li>
+            <li>如果同行人喜欢公路荒野和峡谷地貌，完整打卡版仍可参考。</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel" id="pitfalls">
+      <div class="section-head">
+        <div>
+          <h2>二、旅行中避坑记录</h2>
+          <p>这些是现场体验后的即时判断，后续写游记时会比出发前攻略更有参考价值。</p>
+        </div>
+      </div>
+      <div class="card-grid">
+        <article class="card pitfall">
+          <div class="tag-row"><span class="tag red">D1 可跳过</span><span class="tag blue">适合人群判断</span></div>
+          <h3>S101/安集海不是所有人都值得走</h3>
+          <p>如果不喜欢戈壁滩、丹霞、荒原风貌，第一天可以直接去赛里木湖。北京出发也可以考虑直接飞伊宁，把时间留给赛湖和伊犁河谷。</p>
+        </article>
+        <article class="card pitfall">
+          <div class="tag-row"><span class="tag green">D2 可加分</span><span class="tag red">天气决定体验</span></div>
+          <h3>赛里木湖房车和星空要看天气</h3>
+          <p>景区里有房车住宿，应该可以找渠道预订。看星星必须先看天气，云量、月相、风和夜间温度都会影响体验。</p>
+        </article>
+        <article class="card pitfall">
+          <div class="tag-row"><span class="tag green">D3 精简</span><span class="tag blue">轻松版推荐</span></div>
+          <h3>晃晃村 + 薰衣草即可</h3>
+          <p>D3 可以保留晃晃村和薰衣草核心区域，不必把霍城作为必须打卡点。重点放在赛湖补拍、果子沟、晃晃村和伊宁夜晚。</p>
+        </article>
+        <article class="card pitfall">
+          <div class="tag-row"><span class="tag red">可降级</span><span class="tag blue">喀拉峻取舍</span></div>
+          <h3>阔克苏大峡谷体验感不高</h3>
+          <p>现场反馈是意义不大、体验感不高。后续推荐路线里可以把阔克苏从主线拿掉，改成时间富余或特别想看峡谷地貌时再选。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel" id="final-route">
+      <div class="section-head">
+        <div>
+          <h2>三、最终推荐路线</h2>
+          <p>基于现场反馈，最终版不再追求所有点都打卡，而是把时间给更稳定、更有体验感的地方。</p>
+        </div>
+      </div>
+      <div class="map-layout">
+        <div id="map" aria-label="最终推荐路线地图"></div>
+        <div class="route-list" id="routeList"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2>两种入口方案</h2>
+          <p>这部分是给后来参考的人做选择，不同出发地和偏好应该用不同入口。</p>
+        </div>
+      </div>
+      <div class="two-col">
+        <article class="card final">
+          <h3>轻松少踩坑版</h3>
+          <ul>
+            <li>北京或其他城市可优先飞伊宁。</li>
+            <li>赛里木湖留更长时间，天气好再考虑房车和星空。</li>
+            <li>D3 精简为果子沟、晃晃村、薰衣草和伊宁。</li>
+            <li>喀拉峻保留草原线，阔克苏降级为可选。</li>
+          </ul>
+        </article>
+        <article class="card summary">
+          <h3>完整打卡版</h3>
+          <ul>
+            <li>乌鲁木齐进出，保留 S101/安集海。</li>
+            <li>适合喜欢公路、丹霞、峡谷和荒野的人。</li>
+            <li>行程更满，对司机体力和天气要求更高。</li>
+            <li>阔克苏只建议在时间充裕、体力充足时加入。</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel" id="journal">
+      <div class="section-head">
+        <div>
+          <h2>四、旅行日记框架</h2>
+          <p>后续每天补真实体验、照片和住宿细节。现在先把结构搭好，避免素材散掉。</p>
+        </div>
+      </div>
+      <div class="journal" id="journalList"></div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2>五、阶段性总结</h2>
+          <p>目前结论会随着后续每天现场反馈继续修正。</p>
+        </div>
+      </div>
+      <div class="card-grid">
+        <article class="card final">
+          <h3>更值得留时间</h3>
+          <p>赛里木湖、喀拉峻草原线、唐布拉/独库路段。天气好时体验会明显提升。</p>
+        </article>
+        <article class="card pitfall">
+          <h3>可跳过或降级</h3>
+          <p>不喜欢荒漠丹霞时，S101/安集海可跳过；阔克苏大峡谷可从主线降级。</p>
+        </article>
+        <article class="card summary">
+          <h3>最大变量</h3>
+          <p>天气、赛湖星空、独库/伊昭路况、景区住宿位置和是否需要换乘/报备。</p>
+        </article>
+        <article class="card plan">
+          <h3>下次会怎么走</h3>
+          <p>更倾向少赶路，把赛湖和草原时间拉长；如果从北京出发，优先评估直飞伊宁。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>照片占位</h2>
+      <p class="lead">现在先用参考图占位。后续可以替换成你们自己的照片，并给每张图加真实拍摄地点和当天感受。</p>
+      <div class="photo-grid">
+        <a class="photo" href="https://p1-q.mafengwo.net/s11/M00/75/21/wKgBEFt6N_CANxCgAAulwEfkm8M17.jpeg?imageView2%2F2%2Fw%2F900%2Fh%2F520%2Fq%2F70" target="_blank" rel="noreferrer"><img src="https://p1-q.mafengwo.net/s11/M00/75/21/wKgBEFt6N_CANxCgAAulwEfkm8M17.jpeg?imageView2%2F2%2Fw%2F900%2Fh%2F520%2Fq%2F70" alt="赛里木湖"><span>赛里木湖：建议留足时间</span></a>
+        <a class="photo" href="https://note.mafengwo.net/img/c3/44/4a4d5b026d6d5979ac1b675ec81bd258.jpeg?imageView2%2F2%2Fw%2F900%2Fh%2F520%2Fq%2F70" target="_blank" rel="noreferrer"><img src="https://note.mafengwo.net/img/c3/44/4a4d5b026d6d5979ac1b675ec81bd258.jpeg?imageView2%2F2%2Fw%2F900%2Fh%2F520%2Fq%2F70" alt="晃晃村"><span>晃晃村：D3 可保留</span></a>
+        <a class="photo" href="https://p1-q.mafengwo.net/s19/M00/C0/DB/CoNG-2KTddVRt9t9AAV4p-gcpeM.jpeg?imageView2%2F2%2Fw%2F900%2Fh%2F520%2Fq%2F70" target="_blank" rel="noreferrer"><img src="https://p1-q.mafengwo.net/s19/M00/C0/DB/CoNG-2KTddVRt9t9AAV4p-gcpeM.jpeg?imageView2%2F2%2Fw%2F900%2Fh%2F520%2Fq%2F70" alt="喀拉峻"><span>喀拉峻：草原线优先</span></a>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const stops = {
+      urumqi: { lat: 43.8256, lng: 87.6168, name: '乌鲁木齐' },
+      dushanzi: { lat: 44.328, lng: 84.886, name: '独山子' },
+      sayram: { lat: 44.594, lng: 81.186, name: '赛里木湖' },
+      huanghuang: { lat: 44.2853, lng: 80.9321, name: '晃晃村' },
+      yining: { lat: 43.908, lng: 81.278, name: '伊宁' },
+      yizhao: { lat: 43.49, lng: 81.146, name: '伊昭公路' },
+      tekes: { lat: 43.218, lng: 81.835, name: '特克斯' },
+      kalajun: { lat: 43.061, lng: 82.137, name: '喀拉峻' },
+      xinyuan: { lat: 43.433, lng: 83.255, name: '新源' },
+      bayinbuluk: { lat: 43.031, lng: 84.151, name: '巴音布鲁克' },
+      tangbula: { lat: 43.66, lng: 84.18, name: '唐布拉' },
+      qorma: { lat: 43.653, lng: 84.359, name: '乔尔玛' },
+      kuitun: { lat: 44.426, lng: 84.9, name: '奎屯/独山子' }
+    };
+
+    const finalRoute = [
+      { day: 'D1', title: '直奔赛里木湖或先到独山子', route: ['乌鲁木齐/伊宁', '赛里木湖'], note: '不喜欢荒漠丹霞时，跳过 S101/安集海。' },
+      { day: 'D2', title: '赛里木湖深玩', route: ['赛里木湖'], note: '房车和星空看天气，不把星空当硬任务。' },
+      { day: 'D3', title: '赛湖 → 果子沟 → 晃晃村 → 薰衣草 → 伊宁', route: ['赛里木湖', '晃晃村', '伊宁'], note: '霍城不作为必须打卡点。' },
+      { day: 'D4', title: '伊宁 → 伊昭公路 → 昭苏/特克斯', route: ['伊宁', '伊昭公路', '特克斯'], note: '只白天走，天气差就降级。' },
+      { day: 'D5', title: '喀拉峻草原线', route: ['特克斯', '喀拉峻'], note: '草原线优先，骑马短体验即可。' },
+      { day: 'D6', title: '阔克苏降级，推进新源', route: ['喀拉峻', '新源'], note: '阔克苏可不去，把体力留给后程。' },
+      { day: 'D7', title: '新源 → 巴音布鲁克', route: ['新源', '巴音布鲁克'], note: '到得早、天气好再看九曲十八弯日落。' },
+      { day: 'D8', title: '巴音布鲁克 → 唐布拉', route: ['巴音布鲁克', '乔尔玛', '唐布拉'], note: '唐布拉按 S315 长廊理解，不当单点。' },
+      { day: 'D9', title: '唐布拉/乔尔玛 → 独库北段 → 独山子/奎屯', route: ['唐布拉', '乔尔玛', '奎屯/独山子'], note: '核心是安全走完北段，不再叠加长支线。' },
+      { day: 'D10', title: '返乌鲁木齐', route: ['奎屯/独山子', '乌鲁木齐'], note: '作为独库延误缓冲。' }
+    ];
+
+    const journal = [
+      { day: 'D1', date: '6月19日', title: '乌鲁木齐/S101/安集海取舍', best: '适合喜欢公路荒野、丹霞、峡谷的人。', avoid: '不喜欢戈壁丹霞就直接去赛里木湖。', status: '已记录避坑' },
+      { day: 'D2', date: '6月20日', title: '赛里木湖', best: '湖泊、草场、雪山和天气好时的星空。', avoid: '星空和房车体验不要脱离天气判断。', status: '待补照片和住宿' },
+      { day: 'D3', date: '6月21日', title: '果子沟、晃晃村、薰衣草、伊宁', best: '晃晃村和薰衣草核心区域即可。', avoid: '霍城不需要作为硬打卡点。', status: '已记录避坑' },
+      { day: 'D4-D6', date: '6月22-24日', title: '伊昭、特克斯、喀拉峻', best: '喀拉峻草原线优先。', avoid: '阔克苏大峡谷体验感不高，可降级或跳过。', status: '待补真实日记' },
+      { day: 'D7-D10', date: '6月25-28日', title: '巴音布鲁克、唐布拉、独库北段', best: '按天气和路况决定停留深度。', avoid: '不要为了补点压缩独库山路安全余量。', status: '待补现场反馈' }
+    ];
+
+    const routeList = document.getElementById('routeList');
+    finalRoute.forEach(item => {
+      const el = document.createElement('article');
+      el.className = 'route-day';
+      el.innerHTML = `<strong>${item.day} ${item.title}</strong><span>${item.route.join(' → ')}</span><span>${item.note}</span>`;
+      routeList.appendChild(el);
+    });
+
+    const journalList = document.getElementById('journalList');
+    journal.forEach(item => {
+      const el = document.createElement('article');
+      el.className = 'journal-day';
+      el.innerHTML = `
+        <div class="date-box">${item.day}<span>${item.date}</span></div>
+        <div>
+          <div class="tag-row"><span class="tag blue">${item.status}</span></div>
+          <h3>${item.title}</h3>
+          <p><strong>最值得：</strong>${item.best}</p>
+          <p><strong>避坑：</strong>${item.avoid}</p>
+        </div>`;
+      journalList.appendChild(el);
+    });
+
+    const map = L.map('map', { scrollWheelZoom: true }).setView([43.95, 82.85], 7);
+    L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=7&x={x}&y={y}&z={z}', {
+      subdomains: ['1', '2', '3', '4'],
+      maxZoom: 12,
+      attribution: '高德地图道路底图'
+    }).addTo(map);
+
+    const routeIds = ['urumqi', 'dushanzi', 'sayram', 'huanghuang', 'yining', 'yizhao', 'tekes', 'kalajun', 'xinyuan', 'bayinbuluk', 'qorma', 'tangbula', 'qorma', 'kuitun', 'urumqi'];
+    const latlngs = routeIds.map(id => [stops[id].lat, stops[id].lng]);
+    L.polyline(latlngs, { color: '#2563eb', weight: 4, opacity: 0.82 }).addTo(map);
+    const bounds = [];
+    Object.entries(stops).forEach(([id, stop], index) => {
+      const skip = ['dushanzi'].includes(id);
+      const icon = L.divIcon({
+        className: '',
+        html: `<div class="marker-pin${skip ? ' skip' : ''}">${index + 1}</div>`,
+        iconSize: [26, 26],
+        iconAnchor: [13, 13]
+      });
+      const marker = L.marker([stop.lat, stop.lng], { icon }).addTo(map);
+      marker.bindPopup(`<strong>${stop.name}</strong><br>${skip ? '可按偏好跳过或只作中转' : '最终路线参考点'}`);
+      bounds.push([stop.lat, stop.lng]);
+    });
+    map.fitBounds(bounds, { padding: [24, 24] });
+  </script>
+</body>
+</html>
