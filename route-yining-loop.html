@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>直飞伊宁北侧闭环：赛湖接独库 + 唐布拉深玩</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1f2933;
+      --muted: #667085;
+      --line: #d9e2ec;
+      --bg: #f7f9fb;
+      --card: #ffffff;
+      --blue: #2563eb;
+      --green: #2f855a;
+      --amber: #b7791f;
+      --red: #d64545;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.55;
+    }
+    main {
+      width: min(1240px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 24px 0 42px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(24px, 4vw, 38px);
+      letter-spacing: 0;
+    }
+    h2 {
+      margin: 0 0 8px;
+      font-size: 21px;
+      letter-spacing: 0;
+    }
+    h3 {
+      margin: 0 0 4px;
+      font-size: 17px;
+      letter-spacing: 0;
+    }
+    p { margin: 0; }
+    a { color: var(--blue); }
+    .lead {
+      max-width: 980px;
+      margin-bottom: 14px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+    .notice {
+      border: 1px solid #f2c94c;
+      background: #fff8dc;
+      padding: 12px 14px;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      font-size: 14px;
+    }
+    .review-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin: 14px 0;
+    }
+    .review-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 11px;
+      background: #fff;
+    }
+    .review-card.important {
+      border-color: rgba(214, 69, 69, 0.32);
+      background: #fffafa;
+    }
+    .review-card.good {
+      border-color: rgba(47, 133, 90, 0.28);
+      background: #f7fff9;
+    }
+    .review-card h3 {
+      margin-bottom: 5px;
+    }
+    .review-card p {
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.12fr) minmax(360px, 0.88fr);
+      gap: 14px;
+      align-items: start;
+    }
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      box-shadow: 0 8px 22px rgba(31, 41, 51, 0.06);
+    }
+    #map {
+      height: min(72vh, 680px);
+      min-height: 520px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .legend span::before {
+      content: "";
+      display: inline-block;
+      width: 18px;
+      height: 4px;
+      margin-right: 6px;
+      vertical-align: middle;
+      border-radius: 999px;
+      background: var(--blue);
+    }
+    .legend .scenic::before { background: var(--green); }
+    .legend .mountain::before { background: var(--amber); }
+    .legend .risk::before { background: var(--red); }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #fbfdff;
+    }
+    .metric strong {
+      display: block;
+      font-size: 18px;
+    }
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .days {
+      display: grid;
+      gap: 9px;
+      max-height: min(72vh, 680px);
+      min-height: 520px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+    .day {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #fbfdff;
+      cursor: pointer;
+    }
+    .day.active {
+      border-color: rgba(37, 99, 235, 0.6);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .meta {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 7px;
+    }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 7px;
+      margin-top: 8px;
+      font-size: 13px;
+    }
+    .detail {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px;
+      background: #fff;
+    }
+    .detail.wide { grid-column: 1 / -1; }
+    .detail strong {
+      display: block;
+      margin-bottom: 2px;
+      color: #26384d;
+    }
+    .route-list {
+      margin: 8px 0 0;
+      padding-left: 18px;
+      font-size: 14px;
+    }
+    .route-list li { margin: 4px 0; }
+    .nav {
+      margin-top: 8px;
+      padding: 8px;
+      border-radius: 8px;
+      background: #f3f7ff;
+      color: #24406e;
+      font-size: 13px;
+    }
+    .warn {
+      margin-top: 7px;
+      padding: 8px;
+      border-radius: 8px;
+      background: #fff5f5;
+      color: #8a2c2c;
+      font-size: 13px;
+    }
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .links a {
+      color: var(--blue);
+      text-decoration: none;
+      border: 1px solid #bfdbfe;
+      background: #eff6ff;
+      border-radius: 8px;
+      padding: 4px 8px;
+      font-size: 13px;
+    }
+    .marker-pin {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border: 2px solid #1f2933;
+      border-radius: 50%;
+      background: #fff;
+      color: #1f2933;
+      font-size: 12px;
+      font-weight: 800;
+      box-shadow: 0 4px 12px rgba(31, 41, 51, 0.18);
+    }
+    .marker-pin.scenic {
+      border-color: var(--green);
+      color: var(--green);
+    }
+    .marker-pin.mountain {
+      border-color: var(--amber);
+      color: var(--amber);
+    }
+    .marker-pin.risk {
+      border-color: var(--red);
+      color: var(--red);
+      background: #fff5f5;
+    }
+    .section {
+      margin-top: 14px;
+    }
+    .section ul {
+      margin: 8px 0 0;
+      padding-left: 18px;
+    }
+    .section li { margin: 5px 0; }
+    .point-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .point {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px;
+      background: #fbfdff;
+      cursor: pointer;
+    }
+    .point:hover {
+      border-color: rgba(37, 99, 235, 0.5);
+      background: #f3f7ff;
+    }
+    .point strong {
+      display: block;
+      font-size: 14px;
+    }
+    .point span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+    .point a {
+      display: inline-block;
+      margin-top: 5px;
+      color: var(--blue);
+      font-size: 12px;
+      text-decoration: none;
+    }
+    .leaflet-tooltip.route-tip {
+      border: 0;
+      border-radius: 999px;
+      box-shadow: 0 4px 12px rgba(31, 41, 51, 0.16);
+      font-weight: 700;
+      padding: 3px 8px;
+    }
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      #map, .days {
+        height: auto;
+        min-height: 420px;
+        max-height: none;
+      }
+      .summary { grid-template-columns: 1fr; }
+      .review-grid { grid-template-columns: 1fr; }
+      .detail-grid { grid-template-columns: 1fr; }
+      .point-list { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>直飞伊宁北侧闭环：赛湖接独库，唐布拉深玩</h1>
+    <p class="lead">这版按你刚才指出的真实地图关系重排：伊宁落地后先走晃晃村/霍城/果子沟/赛湖，赛湖后继续向东到独山子，从独库北段南下到乔尔玛，再把唐布拉作为深玩目的地，最后经那拉提/巴音布鲁克、喀拉峻、昭苏/伊昭回伊宁，最后一天直接从伊宁飞走。</p>
+    <p class="lead"><a href="travel-journal.html">查看旅行复盘版</a> · <a href="route-options-grassland.html">查看旧版乌鲁木齐进出路线</a></p>
+    <div class="notice"><strong>路线判断：</strong>这不是“赛湖支线回伊宁”，而是北侧闭环：赛湖后接独山子和独库北段，乔尔玛后顺路进入唐布拉，因此唐布拉可以从“下次再去”升级为一整天深玩。最后一天不再回乌鲁木齐，直接从伊宁机场返程。</div>
+    <div class="review-grid">
+      <article class="review-card good">
+        <h3>复盘后保留</h3>
+        <p>直飞伊宁、赛里木湖留时间、晃晃村 + 薰衣草、喀拉峻住景区、鲜花台拼车去库尔代河谷、唐布拉深玩。</p>
+      </article>
+      <article class="review-card important">
+        <h3>复盘后降级</h3>
+        <p>S101/安集海不适合这版；阔克苏体验感不高，放到可选；霍城不作为硬打卡点；天气不好不硬去巴音布鲁克。</p>
+      </article>
+      <article class="review-card important">
+        <h3>出发前准备</h3>
+        <p>赛湖房车/星空看天气和渠道；那拉提票提前抢；巴音布鲁克用莉景天气看小时级预报；无人机最好提前准备并查禁飞规则。</p>
+      </article>
+    </div>
+
+    <div class="layout">
+      <section class="panel">
+        <h2>北侧闭环道路走廊图</h2>
+        <div id="map" aria-label="直飞伊宁北侧闭环路线地图"></div>
+        <div class="legend">
+          <span>高速/国省道主线</span>
+          <span class="scenic">景区/草原支线</span>
+          <span class="mountain">独库/伊昭山区段</span>
+          <span class="risk">天气/票务决策点</span>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <div class="summary">
+          <div class="metric"><strong>入口</strong><span>伊宁进出，不去乌鲁木齐</span></div>
+          <div class="metric"><strong>核心</strong><span>赛湖接独库，唐布拉深玩</span></div>
+          <div class="metric"><strong>收尾</strong><span>伊昭回伊宁，最后一天飞走</span></div>
+        </div>
+        <div class="days" id="dayList"></div>
+      </aside>
+    </div>
+
+    <section class="panel section">
+      <h2>这版为什么成环</h2>
+      <ul>
+        <li><strong>北侧闭环：</strong>伊宁 → 晃晃村/霍城 → 赛里木湖 → 独山子，不再从赛湖回切伊宁。</li>
+        <li><strong>独库入伊犁：</strong>独山子 → 哈希勒根 → 乔尔玛，是从北疆通道切回伊犁草原的关键段。</li>
+        <li><strong>唐布拉顺路深玩：</strong>乔尔玛就在 G217/S315 交汇处，往西就是唐布拉百里画廊；这版专门给 D4 一整天。</li>
+        <li><strong>天气决策：</strong>那拉提/巴音布鲁克仍然用莉景天气判断。天气好可以去巴音布鲁克赌九曲十八弯“九个太阳”，天气不好优先那拉提。</li>
+        <li><strong>最后一天轻：</strong>D10 只做伊宁机场返程，前一天必须回到伊宁，避免赶飞机叠加山路风险。</li>
+      </ul>
+    </section>
+
+    <section class="panel section">
+      <h2>复盘避坑怎么落到这版</h2>
+      <ul>
+        <li><strong>直飞伊宁：</strong>不再从乌鲁木齐开局，直接把时间给赛湖、独库、唐布拉、喀拉峻和伊犁河谷。</li>
+        <li><strong>赛湖：</strong>景区内房车可以找渠道尝试预订；星空只在天气、云量、月相合适时才值得等。</li>
+        <li><strong>晃晃村：</strong>保留，但和薰衣草一起做轻体验；霍城不再作为必须打卡点。</li>
+        <li><strong>唐布拉：</strong>旧版因为时间不够只能下次，这版靠赛湖接独库成环，专门留 D4 深玩。</li>
+        <li><strong>喀拉峻：</strong>一定要住景区，傍晚和清晨非常漂亮；鲜花台可找拼车去库尔代河谷。</li>
+        <li><strong>阔克苏：</strong>体验感不高，从主线拿掉，只在时间富余且特别想看峡谷地貌时再加。</li>
+        <li><strong>无人机：</strong>草原坡线、湖岸、河谷、公路弯道和花田平视拍不出效果，出发前准备好并确认禁飞、实名、电池和风速。</li>
+      </ul>
+    </section>
+
+    <section class="panel section">
+      <h2>地图点位核对清单</h2>
+      <p class="lead">点清单项会把地图缩放到对应位置；每天卡片里也写了建议导航搜法。</p>
+      <div class="point-list" id="pointList"></div>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const stops = {
+      yining: { lat: 43.908, lng: 81.278, name: '伊宁机场/市区', type: 'main', nav: '伊宁机场或伊宁市区酒店' },
+      huanghuang: { lat: 44.2853, lng: 80.9321, name: '晃晃村', type: 'scenic', nav: '晃晃村；也可先搜果子沟/霍城后分段过去' },
+      huocheng: { lat: 44.048, lng: 80.872, name: '霍城薰衣草/清水河', type: 'scenic', nav: '霍城薰衣草园区或清水河镇' },
+      guozigou: { lat: 44.468, lng: 80.93, name: '果子沟大桥', type: 'main', nav: '果子沟服务区或合规观景点' },
+      sayram: { lat: 44.594, lng: 81.186, name: '赛里木湖', type: 'scenic', nav: '赛里木湖东门游客中心或已订酒店' },
+      dushanzi: { lat: 44.328, lng: 84.886, name: '独山子', type: 'main', nav: '独山子酒店/独库公路零起点' },
+      hashilegen: { lat: 44.197, lng: 84.572, name: '哈希勒根达坂', type: 'mountain', nav: '哈希勒根达坂，独库北段路况点' },
+      qorma: { lat: 43.653, lng: 84.359, name: '乔尔玛', type: 'mountain', nav: '乔尔玛烈士陵园/乔尔玛服务点' },
+      tangbulaEast: { lat: 43.66, lng: 84.18, name: '唐布拉东段/S315', type: 'scenic', nav: '乔尔玛转 S315，搜唐布拉百里画廊东段或唐布拉草原方向' },
+      nileke: { lat: 43.799, lng: 82.511, name: '尼勒克', type: 'main', nav: '尼勒克县城酒店' },
+      nalati: { lat: 43.378, lng: 83.998, name: '那拉提镇/景区', type: 'risk', nav: '那拉提镇酒店；确定进景区再搜那拉提游客服务中心' },
+      bayinbuluk: { lat: 43.031, lng: 84.151, name: '巴音布鲁克', type: 'risk', nav: '巴音布鲁克镇/游客中心，不要把九曲十八弯设为自驾终点' },
+      xinyuan: { lat: 43.433, lng: 83.255, name: '新源', type: 'main', nav: '新源县城酒店/补给' },
+      gongliu: { lat: 43.484, lng: 82.231, name: '巩留', type: 'main', nav: '巩留县城补给/酒店' },
+      kalajunEast: { lat: 43.061, lng: 82.137, name: '喀拉峻东门', type: 'scenic', nav: '喀拉峻东门游客服务中心' },
+      kalajunStay: { lat: 43.082, lng: 82.165, name: '喀拉峻住宿点', type: 'scenic', nav: '按已订酒店/毡房精确定位；不要只搜“喀拉峻”' },
+      tekes: { lat: 43.218, lng: 81.835, name: '特克斯', type: 'main', nav: '特克斯酒店/八卦城' },
+      zhaosu: { lat: 43.157, lng: 81.13, name: '昭苏', type: 'main', nav: '昭苏县城' },
+      yizhao: { lat: 43.49, lng: 81.146, name: '伊昭公路白石峰段', type: 'mountain', nav: '伊昭公路/白石峰服务点' }
+    };
+
+    const stopOrder = [
+      'yining', 'huanghuang', 'huocheng', 'guozigou', 'sayram', 'dushanzi',
+      'hashilegen', 'qorma', 'tangbulaEast', 'nileke', 'nalati', 'bayinbuluk',
+      'xinyuan', 'gongliu', 'kalajunEast', 'kalajunStay', 'tekes', 'zhaosu', 'yizhao'
+    ];
+
+    const days = [
+      {
+        id: 'd1',
+        title: 'D1：伊宁落地 → 晃晃村/薰衣草 → 果子沟/赛湖',
+        meta: '伊宁进，不去乌鲁木齐；落地早就住赛湖/果子沟，落地晚可住清水河。',
+        points: ['yining', 'huanghuang', 'huocheng', 'guozigou', 'sayram'],
+        color: '#2563eb',
+        route: ['伊宁机场/取车点', '晃晃村', '霍城薰衣草/清水河', '果子沟大桥合规观景点', '赛里木湖东门/酒店'],
+        drive: '伊宁到赛湖方向纯开约 3.5-5 小时，含晃晃村/薰衣草/果子沟停留按 6-8 小时。',
+        rhythm: '如果中午前落地，可以直接向西北推进；如果下午落地，优先清水河/果子沟过夜，赛湖深玩留给 D2。',
+        play: '晃晃村和薰衣草做轻体验，果子沟只在合规观景点停，晚上看赛湖天气决定是否安排星空。霍城只作为薰衣草/清水河方向，不再硬打卡县城。',
+        focus: '把原来乌鲁木齐开局的长距离转场换成伊犁河谷轻启动，也是复盘后“直飞伊宁”的核心收益。',
+        clothing: '白色、浅黄、浅蓝、牛仔蓝适合村落和薰衣草；薰衣草地少穿深紫。',
+        tradeoff: '这天不要把伊宁市区夜游硬塞进去，先把车和人推到赛湖附近；晃晃村如果停车或村道路况不理想，就降级为路过。',
+        nav: '分段搜“晃晃村”“霍城薰衣草园区/清水河镇”“果子沟服务区”“赛里木湖东门游客中心或酒店”。',
+        warn: '果子沟不要临停高速；晃晃村出发前用百度/高德双查停车点和村道可达性。薰衣草花期不佳时不要为霍城绕太久。'
+      },
+      {
+        id: 'd2',
+        title: 'D2：赛里木湖深玩 → 独山子',
+        meta: '上午/中午留给赛湖，下午沿 G30 向东到独山子，为 D3 独库做准备。',
+        points: ['sayram', 'dushanzi'],
+        color: '#2563eb',
+        route: ['赛里木湖酒店/东门', '赛湖环湖重点段', 'G30 连霍高速', '独山子酒店'],
+        drive: '赛湖到独山子约 310-340 km，纯开约 4-4.5 小时；赛湖游玩 4-6 小时。',
+        rhythm: '上午重点环湖和补拍，午后出湖上高速，天黑前到独山子。想看星空则前一晚看天气，不把星空当硬任务；房车住宿可提前找渠道问，但也要看天气值不值得。',
+        play: '赛湖湖岸、草场、雪山、松树头/克勒涌珠一带；如果订到景区房车且天气好，可以把星空和清晨湖边作为加分项；下午转为长距离高速推进。',
+        focus: '这天是闭环成立的关键：不回伊宁，直接接独山子。',
+        clothing: '赛湖适合白色、浅蓝、鹅黄、红色小面积点缀；湖边风大，外套要能防风。',
+        tradeoff: '如果赛湖天气特别好，可以多留一两个小时；如果云量大、风大或月相不合适，星空/房车体验就不要当硬目标。',
+        nav: '先搜赛湖当日入口/酒店，出湖后直接搜“独山子酒店/独库公路零起点”。',
+        warn: '赛湖门票/自驾环湖政策提前确认；景区房车要问清位置、价格、是否含门票/车辆规则。下午高速转场不要疲劳驾驶。'
+      },
+      {
+        id: 'd3',
+        title: 'D3：独山子 → 独库北段 → 乔尔玛 → 唐布拉',
+        meta: '从北往南进独库，晚上住唐布拉沿线/尼勒克，为 D4 深玩留位置。',
+        points: ['dushanzi', 'hashilegen', 'qorma', 'tangbulaEast', 'nileke'],
+        color: '#b7791f',
+        route: ['独山子酒店', '独库公路北段', '哈希勒根达坂', '乔尔玛', '唐布拉百里画廊/尼勒克住宿'],
+        drive: '纯开约 5-7 小时，含独库停车和乔尔玛休息按 7-9 小时。',
+        rhythm: '早出发，只白天走独库；乔尔玛后转 S315，傍晚前落实唐布拉或尼勒克住宿。',
+        play: '独库北段雪墙/达坂/草甸切换，乔尔玛节点，傍晚进入唐布拉河谷。航拍能更好表现公路弯道和河谷尺度，但必须先确认禁飞和风速。',
+        focus: '这天负责把赛湖北线和伊犁草原线接起来。',
+        clothing: '独库雪墙和达坂适合红色、白色、黑白户外风、亮色冲锋衣；鞋子要防滑。',
+        tradeoff: 'D3 不深玩唐布拉，只把住宿推进到唐布拉沿线，让 D4 不赶。',
+        nav: '分段搜“独库公路零起点”“哈希勒根达坂”“乔尔玛烈士陵园/服务点”“唐布拉百里画廊东段/尼勒克酒店”。',
+        warn: '独库北段受天气、落石、管制影响大；出发前一天和当天早晨都看交警公告。无人机不要在禁飞区、强风或临路危险位置硬飞。'
+      },
+      {
+        id: 'd4',
+        title: 'D4：唐布拉百里画廊深玩',
+        meta: '这版新增核心日：不再路过唐布拉，给 S315 河谷、草原、森林和支线一整天。',
+        points: ['nileke', 'tangbulaEast', 'qorma', 'tangbulaEast', 'nileke'],
+        color: '#2f855a',
+        route: ['尼勒克/唐布拉住宿点', 'S315 唐布拉百里画廊', '乔尔玛方向河谷', '沿线村落/支线浅探', '尼勒克或唐布拉住宿'],
+        drive: '看支线深度，纯开约 2.5-5 小时；游玩 5-8 小时。',
+        rhythm: '上午慢走 S315，下午选 1-2 条支线或河谷深处，不追求全走完；第二晚仍住尼勒克/唐布拉沿线。',
+        play: '河谷草原、溪流、森林、雪山背景、沿线村落和百里画廊层次，适合慢拍和无人机。复盘里说唐布拉适合下次深度探索，这版就是把“下次”提前落实。',
+        focus: '唐布拉从“下次再去”升级为本版亮点，靠深玩而不是打卡；选 1-2 条支线慢慢探索，比赶完整条百里画廊更重要。',
+        clothing: '白色、奶油色、浅黄、牛仔蓝、红色披肩都适合；森林阴影里少穿黑绿。',
+        tradeoff: '深玩唐布拉的代价是后面那拉提/巴音布鲁克要二选一或浅玩，不再全都深扎。',
+        nav: '以住宿点为锚，分段搜“唐布拉百里画廊”“乔尔玛”“尼勒克县城”。支线当天看路况和天气，不一键搜远端小点。',
+        warn: '唐布拉是长廊不是单点；不要夜走陌生支线，遇到泥泞、施工、无信号路段及时回主路。无人机起飞前确认景区/牧区规则、风速和返航点。'
+      },
+      {
+        id: 'd5',
+        title: 'D5：唐布拉/尼勒克 → 那拉提或巴音布鲁克',
+        meta: '按莉景天气做选择：天气好可去巴音布鲁克赌九个太阳，天气不好优先那拉提。',
+        points: ['nileke', 'tangbulaEast', 'qorma', 'nalati', 'bayinbuluk'],
+        color: '#2563eb',
+        route: ['尼勒克/唐布拉住宿点', '乔尔玛或 G217 接线', '那拉提镇/景区', '巴音布鲁克镇/游客中心'],
+        drive: '到那拉提相对轻；继续到巴音布鲁克按当天导航预留 5-8 小时含停靠。',
+        rhythm: '早上先查莉景天气的景点小时级预报，看云量、降水、能见度、风速，再决定那拉提深玩还是推进巴音布鲁克。',
+        play: '那拉提看浓郁草原色彩；巴音布鲁克看高寒开阔和九曲十八弯日落倒影。不要因为已经有喀拉峻和唐布拉就觉得草原重复，它们观感不同。',
+        focus: 'D5 是天气决策日，不是机械赶路日。',
+        clothing: '那拉提适合白色、奶油色、浅黄、浅蓝、红色；巴音布鲁克适合灰蓝、卡其、浅色冲锋衣和日落披肩。',
+        tradeoff: '天气不好就不要为巴音布鲁克长距离折腾；选巴音布鲁克就接受那拉提浅玩。那拉提票和自驾票紧张，想进景区要提前抢。',
+        nav: '那拉提搜“那拉提镇酒店/游客服务中心”；巴音布鲁克搜“巴音布鲁克镇/游客中心”，不要把九曲十八弯设为自驾终点。',
+        warn: '那拉提票和自驾票紧张时提前预约；巴音布鲁克日落高度依赖天气，天气不好就不要硬赌“九个太阳”。'
+      },
+      {
+        id: 'd6',
+        title: 'D6：那拉提/巴音布鲁克 → 新源/巩留 → 特克斯',
+        meta: '从东侧草原转回喀拉峻方向，晚上住特克斯或喀拉峻外侧。',
+        points: ['bayinbuluk', 'nalati', 'xinyuan', 'gongliu', 'tekes'],
+        color: '#2563eb',
+        route: ['那拉提或巴音布鲁克住宿点', '新源县城补给', '巩留县城', '特克斯八卦城'],
+        drive: '按起点不同纯开约 5-8 小时，含补给按 7-9 小时。',
+        rhythm: '上午轻补景区或直接出发，下午主要推进到特克斯；这天不再加恰西/库尔德宁。',
+        play: '路途草原、河谷和补给休整，晚上特克斯八卦城散步。恰西/库尔德宁和阔克苏都不放主线，避免把推进日压垮。',
+        focus: '把住宿推进到喀拉峻门口，为 D7 住景区留完整时间。',
+        clothing: '路途日穿舒适户外风，晚上特克斯可换城市休闲风。',
+        tradeoff: '这天是推进日，不追求新增景点；想轻松可只到巩留/新源，但会压缩 D7。阔克苏在复盘里体验感不高，不建议为了补它改乱节奏。',
+        nav: '分段搜“新源县城”“巩留县城”“特克斯酒店/八卦城”。不要从巴音布鲁克一键搜喀拉峻内部住宿。',
+        warn: '如果 D5 住巴音布鲁克，这天车程会更长，务必早出发。'
+      },
+      {
+        id: 'd7',
+        title: 'D7：特克斯 → 喀拉峻草原深玩 → 住景区',
+        meta: '复盘强推荐：喀拉峻一定要住景区，傍晚和清晨都很漂亮。',
+        points: ['tekes', 'kalajunEast', 'kalajunStay'],
+        color: '#2f855a',
+        route: ['特克斯酒店', '喀拉峻东门游客服务中心', '喀拉峻草原线', '喀拉峻住宿点'],
+        drive: '路面车程约 1-2 小时；景区游玩 5-7 小时。',
+        rhythm: '尽量 9 点前到东门，全天草原线，傍晚住景区内，不再回特克斯。',
+        play: '鲜花台、猎鹰台、五花草甸、草原坡线、雪山背景；可以安排 30-60 分钟短骑马。傍晚和清晨都留给景区，不要当天往返特克斯。',
+        focus: '全程核心草原日，负责补足喀拉峻的色彩丰富和地形层次；复盘结论是喀拉峻一定要住景区，非常漂亮。',
+        clothing: '白裙、红裙、浅黄、浅蓝、民族风披肩都出片；骑马穿长裤和包脚鞋。',
+        tradeoff: '住宿条件和位置要提前确认，但换来清晨/傍晚最漂亮的窗口。喀拉峻色彩更丰富，那拉提色彩更浓郁，两者不是重复。',
+        nav: '先搜“喀拉峻东门游客服务中心”，入住点一定用酒店/毡房精确定位。',
+        warn: '确认普通车辆能否到达、是否需要景区换乘或报备；让商家发高德/百度精确定位，不要只搜“喀拉峻”。'
+      },
+      {
+        id: 'd8',
+        title: 'D8：喀拉峻鲜花台/库尔代河谷 → 特克斯/昭苏',
+        meta: '库尔代河谷优先级高于阔克苏；下午转到昭苏方向。',
+        points: ['kalajunStay', 'kalajunEast', 'tekes', 'zhaosu'],
+        color: '#2f855a',
+        route: ['喀拉峻住宿点', '鲜花台/库尔代河谷拼车', '特克斯补给', '昭苏县城'],
+        drive: '纯开约 3.5-5.5 小时，含库尔代河谷拼车按 7-9 小时。',
+        rhythm: '上午从鲜花台找拼车去库尔代河谷，中午前后结束；下午经特克斯到昭苏。',
+        play: '库尔代河谷现场反馈非常漂亮，优先级高于阔克苏；这天核心是鲜花台拼车去库尔代河谷，不是补峡谷打卡。',
+        focus: '吃透喀拉峻第二个精华点，再为 D9 伊昭回伊宁做准备。',
+        clothing: '白色、浅蓝、红色、牛仔、浅卡其适合河谷和草坡。',
+        tradeoff: '阔克苏可降级或跳过，不要为了峡谷打卡拖到很晚。',
+        nav: '先按喀拉峻住宿点定位，再现场找库尔代河谷拼车；出景区后分段搜“特克斯”“昭苏县城”。',
+        warn: '拼车先确认价格、路线、返程时间和是否等人；如果中午后还没出景区，就减少路边停靠，优先天黑前到昭苏。'
+      },
+      {
+        id: 'd9',
+        title: 'D9：昭苏 → 伊昭公路 → 伊宁',
+        meta: '最后一个山路日，傍晚必须回到伊宁，为 D10 直接飞走留安全余量。',
+        points: ['zhaosu', 'yizhao', 'yining'],
+        color: '#b7791f',
+        route: ['昭苏县城', '伊昭公路白石峰段', '伊宁市区酒店/机场附近'],
+        drive: '纯开约 4.5-6.5 小时，含伊昭停车拍照按 7-9 小时。',
+        rhythm: '早出发，只白天走伊昭；傍晚前回伊宁，晚上收拾行李和还车准备。',
+        play: '伊昭公路雪山、草甸、弯道和白石峰一带；晚上伊宁吃饭休整。',
+        focus: '漂亮收尾，但不把风险留到返程日。',
+        clothing: '白色、红色、浅蓝、浅灰冲锋衣适合雪山草甸；想公路感可穿牛仔和黑白运动风。',
+        tradeoff: '伊昭封路或天气差，改常规路回伊宁，不硬赌山口。',
+        nav: '分段搜“伊昭公路/白石峰服务点”“伊宁酒店/机场附近”。不要只搜伊宁让导航自动避开伊昭。',
+        warn: '伊昭季节性、天气性管制强，出发前一天和当天早晨看交警公告。'
+      },
+      {
+        id: 'd10',
+        title: 'D10：伊宁机场返程',
+        meta: '最后一天不跑长路，直接飞走；只保留市区机动和还车。',
+        points: ['yining'],
+        color: '#2563eb',
+        route: ['伊宁市区酒店', '伊宁机场/还车点'],
+        drive: '市区到机场短途，按航班时间预留还车和安检。',
+        rhythm: '上午按航班时间还车、托运、返程；如果晚班机，可补六星街/喀赞其或买伴手礼。',
+        play: '不安排远距离景区，作为独库/伊昭天气延误缓冲。',
+        focus: '最后一天的价值是稳，不是再加景点。',
+        clothing: '城市轻便穿搭，方便赶飞机和整理行李。',
+        tradeoff: '如果 D9 因伊昭管制延误，D10 仍可作为短缓冲，但不建议再安排出城内容。',
+        nav: '直接搜“伊宁机场”或还车点。',
+        warn: '所有长距离山路都应在 D9 前完成。'
+      }
+    ];
+
+    const stopNumber = Object.fromEntries(stopOrder.map((id, index) => [id, index + 1]));
+    const map = L.map('map', { scrollWheelZoom: true }).setView([43.9, 82.9], 7);
+    L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=7&x={x}&y={y}&z={z}', {
+      subdomains: ['1', '2', '3', '4'],
+      maxZoom: 12,
+      attribution: '高德地图道路底图'
+    }).addTo(map);
+
+    const routeLayers = new Map();
+    const markerLayers = new Map();
+    const bounds = [];
+
+    function latlng(id) {
+      return [stops[id].lat, stops[id].lng];
+    }
+
+    function amapSearch(query) {
+      return `https://www.amap.com/search?query=${encodeURIComponent(query)}`;
+    }
+
+    days.forEach(day => {
+      const coords = day.points.map(latlng);
+      coords.forEach(point => bounds.push(point));
+      const layer = L.polyline(coords, {
+        color: day.color,
+        weight: 5,
+        opacity: 0.74,
+        lineCap: 'round',
+        lineJoin: 'round'
+      }).addTo(map);
+      layer.bindTooltip(day.title.replace(/：.*/, ''), {
+        className: 'route-tip',
+        sticky: true
+      });
+      routeLayers.set(day.id, layer);
+    });
+
+    stopOrder.forEach(id => {
+      const stop = stops[id];
+      const marker = L.marker([stop.lat, stop.lng], {
+        icon: L.divIcon({
+          className: '',
+          html: `<div class="marker-pin ${stop.type}">${stopNumber[id]}</div>`,
+          iconSize: [26, 26],
+          iconAnchor: [13, 13]
+        })
+      }).addTo(map);
+      marker.bindTooltip(`${stopNumber[id]}. ${stop.name}`, {
+        permanent: true,
+        direction: 'top',
+        offset: [0, -12],
+        className: 'route-tip'
+      });
+      marker.bindPopup(`
+        <strong>${stopNumber[id]}. ${stop.name}</strong><br>
+        导航搜法：${stop.nav}<br>
+        <a href="${amapSearch(stop.nav)}" target="_blank" rel="noreferrer">打开高德搜索</a>
+      `);
+      markerLayers.set(id, marker);
+      bounds.push([stop.lat, stop.lng]);
+    });
+
+    map.fitBounds(bounds, { padding: [24, 24] });
+
+    const dayList = document.querySelector('#dayList');
+    days.forEach(day => {
+      const card = document.createElement('article');
+      card.className = 'day';
+      card.id = `card-${day.id}`;
+      card.innerHTML = `
+        <h3>${day.title}</h3>
+        <p class="meta">${day.meta}</p>
+        <div class="detail-grid">
+          <div class="detail"><strong>车程时间</strong>${day.drive}</div>
+          <div class="detail"><strong>建议节奏</strong>${day.rhythm}</div>
+          <div class="detail wide"><strong>当天怎么玩</strong>${day.play}</div>
+          <div class="detail"><strong>重点体验</strong>${day.focus}</div>
+          <div class="detail"><strong>拍照穿搭</strong>${day.clothing}</div>
+          <div class="detail wide"><strong>行程取舍</strong>${day.tradeoff}</div>
+        </div>
+        <ol class="route-list">${day.route.map(item => `<li>${item}</li>`).join('')}</ol>
+        <div class="nav"><strong>导航搜法：</strong>${day.nav}</div>
+        <div class="warn"><strong>注意：</strong>${day.warn}</div>
+        <div class="links">
+          ${day.route.slice(0, 4).map(item => `<a href="${amapSearch(item)}" target="_blank" rel="noreferrer">搜 ${item}</a>`).join('')}
+        </div>
+      `;
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.day.active').forEach(el => el.classList.remove('active'));
+        card.classList.add('active');
+        const layer = routeLayers.get(day.id);
+        map.fitBounds(layer.getBounds(), { padding: [42, 42] });
+        layer.setStyle({ weight: 8, opacity: 1 });
+        routeLayers.forEach((other, id) => {
+          if (id !== day.id) other.setStyle({ weight: 5, opacity: 0.35 });
+        });
+      });
+      dayList.appendChild(card);
+    });
+
+    const pointList = document.querySelector('#pointList');
+    stopOrder.forEach(id => {
+      const stop = stops[id];
+      const item = document.createElement('div');
+      item.className = 'point';
+      item.innerHTML = `
+        <strong>${stopNumber[id]}. ${stop.name}</strong>
+        <span>${stop.nav}</span>
+        <a href="${amapSearch(stop.nav)}" target="_blank" rel="noreferrer">高德搜这个点</a>
+      `;
+      item.addEventListener('click', event => {
+        if (event.target.tagName.toLowerCase() === 'a') return;
+        map.setView([stop.lat, stop.lng], 10);
+        markerLayers.get(id).openPopup();
+      });
+      pointList.appendChild(item);
+    });
+  </script>
+</body>
+</html>
